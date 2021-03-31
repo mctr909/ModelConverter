@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
-class StlBin {
+class StlBin : IModel {
     public struct Surface {
         public vec3 Norm;
         public vec3 V1;
@@ -111,5 +111,49 @@ class StlBin {
             }
         }
         fs.Close();
+    }
+
+    public void Normalize(float scale = 1) {
+        var ofs = new vec3(float.MaxValue, float.MaxValue, float.MaxValue);
+        foreach (var obj in ObjectList) {
+            foreach (var s in obj.SurfaceList) {
+                ofs.x = Math.Min(ofs.x, s.V1.x);
+                ofs.y = Math.Min(ofs.y, s.V1.y);
+                ofs.z = Math.Min(ofs.z, s.V1.z);
+                ofs.x = Math.Min(ofs.x, s.V2.x);
+                ofs.y = Math.Min(ofs.y, s.V2.y);
+                ofs.z = Math.Min(ofs.z, s.V2.z);
+                ofs.x = Math.Min(ofs.x, s.V3.x);
+                ofs.y = Math.Min(ofs.y, s.V3.y);
+                ofs.z = Math.Min(ofs.z, s.V3.z);
+            }
+        }
+        var max = new vec3(float.MinValue, float.MinValue, float.MinValue);
+        foreach (var obj in ObjectList) {
+            foreach (var s in obj.SurfaceList) {
+                var sv = s.V1 - ofs;
+                max.x = Math.Max(max.x, sv.x);
+                max.y = Math.Max(max.y, sv.y);
+                max.z = Math.Max(max.z, sv.z);
+                sv = s.V2 - ofs;
+                max.x = Math.Max(max.x, sv.x);
+                max.y = Math.Max(max.y, sv.y);
+                max.z = Math.Max(max.z, sv.z);
+                sv = s.V3 - ofs;
+                max.x = Math.Max(max.x, sv.x);
+                max.y = Math.Max(max.y, sv.y);
+                max.z = Math.Max(max.z, sv.z);
+            }
+        }
+        var size = Math.Max(max.x, Math.Max(max.y, max.z));
+        foreach (var obj in ObjectList) {
+            for (int i = 0; i < obj.SurfaceList.Count; i++) {
+                var s = obj.SurfaceList[i];
+                s.V1 *= scale / size;
+                s.V2 *= scale / size;
+                s.V3 *= scale / size;
+                obj.SurfaceList[i] = s;
+            }
+        }
     }
 }

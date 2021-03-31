@@ -1,7 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 
-class Metasequoia {
+class Metasequoia : IModel {
     public struct Object {
         public string Name;
         public List<vec3> VertexList;
@@ -137,6 +138,32 @@ class Metasequoia {
                     fs.WriteLine("\t}");
                 }
                 fs.WriteLine("}");
+            }
+        }
+    }
+
+    public void Normalize(float scale = 1) {
+        var ofs = new vec3(float.MaxValue, float.MaxValue, float.MaxValue);
+        foreach (var obj in ObjectList) {
+            foreach (var v in obj.VertexList) {
+                ofs.x = Math.Min(ofs.x, v.x);
+                ofs.y = Math.Min(ofs.y, v.y);
+                ofs.z = Math.Min(ofs.z, v.z);
+            }
+        }
+        var max = new vec3(float.MinValue, float.MinValue, float.MinValue);
+        foreach (var obj in ObjectList) {
+            foreach (var v in obj.VertexList) {
+                var sv = v - ofs;
+                max.x = Math.Max(max.x, sv.x);
+                max.y = Math.Max(max.y, sv.y);
+                max.z = Math.Max(max.z, sv.z);
+            }
+        }
+        var size = Math.Max(max.x, Math.Max(max.y, max.z));
+        foreach (var obj in ObjectList) {
+            for (int i = 0; i < obj.VertexList.Count; i++) {
+                obj.VertexList[i] *= scale / size;
             }
         }
     }

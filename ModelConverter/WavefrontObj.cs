@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 
-class WavefrontObj {
+class WavefrontObj : IModel {
     public struct Surface {
         public List<int> VertexIndex;
         public List<int> UvIndex;
@@ -365,6 +365,26 @@ class WavefrontObj {
             }
         }
         fs.Close();
+    }
+
+    public void Normalize(float scale = 1) {
+        var ofs = new vec3(float.MaxValue, float.MaxValue, float.MaxValue);
+        foreach (var v in VertexList) {
+            ofs.x = Math.Min(ofs.x, v.x);
+            ofs.y = Math.Min(ofs.y, v.y);
+            ofs.z = Math.Min(ofs.z, v.z);
+        }
+        var max = new vec3(float.MinValue, float.MinValue, float.MinValue);
+        foreach (var v in VertexList) {
+            var sv = v - ofs;
+            max.x = Math.Max(max.x, sv.x);
+            max.y = Math.Max(max.y, sv.y);
+            max.z = Math.Max(max.z, sv.z);
+        }
+        var size = Math.Max(max.x, Math.Max(max.y, max.z));
+        for (int i = 0; i < VertexList.Count; i++) {
+            VertexList[i] *= scale / size;
+        }
     }
 
     public void ToTriangle() {

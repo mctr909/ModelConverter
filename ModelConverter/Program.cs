@@ -9,6 +9,9 @@ namespace ModelConverter {
         const string WAVEFRONT_OBJ = "2 : Wavefront OBJ";
         const string METASEQUOIA = "3 : Metasequoia";
 
+        static bool mNomalizeFlg = false;
+        static float mScale = 1.0f;
+
         static readonly List<string> TYPE_LIST = new List<string> {
             STL_BIN,
             STL_TEXT,
@@ -17,10 +20,10 @@ namespace ModelConverter {
         };
 
         static void Main(string[] args) {
-            Console.WriteLine("変換する形式を番号で選んでください");
             foreach (var t in TYPE_LIST) {
                 Console.WriteLine(t);
             }
+            Console.Write("変換する形式を番号で選んでください：");
             var keyLine = Console.ReadLine();
             int typeNo;
             if (!int.TryParse(keyLine, out typeNo)) {
@@ -34,6 +37,19 @@ namespace ModelConverter {
                 return;
             }
             string convertTo = TYPE_LIST[typeNo];
+
+            Console.Write("正規化しますか?[y/n]：");
+            keyLine = Console.ReadLine();
+            if ("y" == keyLine.ToLower()) {
+                mNomalizeFlg = true;
+                Console.Write("スケールを入力してください(単位:mm)：");
+                keyLine = Console.ReadLine();
+                if (!float.TryParse(keyLine, out mScale)) {
+                    Console.WriteLine("数字で選択してください");
+                    Console.ReadKey();
+                    return;
+                }
+            }
 
             for (int argc = 0; argc < args.Length; argc++) {
                 var filePath = args[argc];
@@ -52,131 +68,113 @@ namespace ModelConverter {
                 StlBin stlBin = null;
                 WavefrontObj wavefrontObj = null;
                 Metasequoia metasequoia = null;
-                try {
-                    switch (ext.ToLower()) {
-                    case ".stl":
-                        stlText = new StlText(filePath);
-                        if (0 == stlText.ObjectList.Count) {
-                            stlText = null;
-                            stlBin = new StlBin(filePath);
-                        }
-                        break;
-                    case ".obj":
-                        wavefrontObj = new WavefrontObj(filePath);
-                        break;
-                    case ".mqo":
-                        metasequoia = new Metasequoia(filePath);
-                        break;
+                switch (ext.ToLower()) {
+                case ".stl":
+                    stlText = new StlText(filePath);
+                    if (0 == stlText.ObjectList.Count) {
+                        stlText = null;
+                        stlBin = new StlBin(filePath);
                     }
-                } catch (Exception ex) {
-                    Console.WriteLine(ex);
-                    Console.ReadKey();
+                    break;
+                case ".obj":
+                    wavefrontObj = new WavefrontObj(filePath);
+                    break;
+                case ".mqo":
+                    metasequoia = new Metasequoia(filePath);
+                    break;
                 }
 
-                var convertFilePath = fileDir + "\\" + fileName;
+                // savefile path
+                var saveExt = "";
+                switch (convertTo) {
+                case STL_BIN:
+                case STL_TEXT:
+                    saveExt = ".stl";
+                    break;
+                case WAVEFRONT_OBJ:
+                    saveExt = ".obj";
+                    break;
+                case METASEQUOIA:
+                    saveExt = ".mqo";
+                    break;
+                }
+                var saveFilePath = fileDir + "\\" + fileName;
+                var tmpFilePath = saveFilePath + saveExt;
+                for (int i = 1; File.Exists(tmpFilePath); i++) {
+                    tmpFilePath = saveFilePath + "_" + i + saveExt;
+                }
+                saveFilePath = tmpFilePath;
 
-                try {
-                    // Convert from STL(text) model
-                    if (null != stlText) {
-                        switch (convertTo) {
-                        case STL_BIN:
-                            if (File.Exists(convertFilePath + ".stl")) {
-                                convertFilePath += "(STLtext to STLbin)";
-                            }
-                            stlTextToStlBin(stlText, convertFilePath + ".stl");
-                            break;
-                        case WAVEFRONT_OBJ:
-                            if (File.Exists(convertFilePath + ".obj")) {
-                                convertFilePath += "(STLtext to obj)";
-                            }
-                            stlTextToWavefrontObj(stlText, convertFilePath + ".obj");
-                            break;
-                        case METASEQUOIA:
-                            if (File.Exists(convertFilePath + ".mqo")) {
-                                convertFilePath += "(STLtext to mqo)";
-                            }
-                            stlTextToMetasequoia(stlText, convertFilePath + ".mqo");
-                            break;
-                        }
+                IModel convertedModel = null;
+                // Convert from STL(text) model
+                if (null != stlText) {
+                    switch (convertTo) {
+                    case STL_BIN:
+                        convertedModel = stlTextToStlBin(stlText);
+                        break;
+                    case WAVEFRONT_OBJ:
+                        convertedModel = stlTextToWavefrontObj(stlText);
+                        break;
+                    case METASEQUOIA:
+                        convertedModel = stlTextToMetasequoia(stlText);
+                        break;
                     }
-                    // Convert from STL(bin) model
-                    if (null != stlBin) {
-                        switch (convertTo) {
-                        case STL_TEXT:
-                            if (File.Exists(convertFilePath + ".stl")) {
-                                convertFilePath += "(STLbin to STLtext)";
-                            }
-                            stlBinToStlText(stlBin, convertFilePath + ".stl");
-                            break;
-                        case WAVEFRONT_OBJ:
-                            if (File.Exists(convertFilePath + ".obj")) {
-                                convertFilePath += "(STLbin to obj)";
-                            }
-                            stlBinToWavefrontObj(stlBin, convertFilePath + ".obj");
-                            break;
-                        case METASEQUOIA:
-                            if (File.Exists(convertFilePath + ".mqo")) {
-                                convertFilePath += "(STLbin to mqo)";
-                            }
-                            stlBinToMetasequoia(stlBin, convertFilePath + ".mqo");
-                            break;
-                        }
+                }
+                // Convert from STL(bin) model
+                if (null != stlBin) {
+                    switch (convertTo) {
+                    case STL_TEXT:
+                        convertedModel = stlBinToStlText(stlBin);
+                        break;
+                    case WAVEFRONT_OBJ:
+                        convertedModel = stlBinToWavefrontObj(stlBin);
+                        break;
+                    case METASEQUOIA:
+                        convertedModel = stlBinToMetasequoia(stlBin);
+                        break;
                     }
-                    // Convert from WavefrontObj model
-                    if (null != wavefrontObj) {
-                        switch (convertTo) {
-                        case STL_BIN:
-                            if (File.Exists(convertFilePath + ".stl")) {
-                                convertFilePath += "(obj to STLbin)";
-                            }
-                            wavefrontObjToStlBin(wavefrontObj, convertFilePath + ".stl");
-                            break;
-                        case STL_TEXT:
-                            if (File.Exists(convertFilePath + ".stl")) {
-                                convertFilePath += "(obj to STLtext)";
-                            }
-                            wavefrontObjToStlText(wavefrontObj, convertFilePath + ".stl");
-                            break;
-                        case METASEQUOIA:
-                            if (File.Exists(convertFilePath + ".mqo")) {
-                                convertFilePath += "(obj to mqo)";
-                            }
-                            wavefrontObjToMetasequoia(wavefrontObj, convertFilePath + ".mqo");
-                            break;
-                        }
+                }
+                // Convert from WavefrontObj model
+                if (null != wavefrontObj) {
+                    switch (convertTo) {
+                    case STL_BIN:
+                        convertedModel = wavefrontObjToStlBin(wavefrontObj);
+                        break;
+                    case STL_TEXT:
+                        convertedModel = wavefrontObjToStlText(wavefrontObj);
+                        break;
+                    case METASEQUOIA:
+                        convertedModel = wavefrontObjToMetasequoia(wavefrontObj);
+                        break;
                     }
-                    // Convert from Metasequoia model
-                    if (null != metasequoia) {
-                        switch (convertTo) {
-                        case STL_BIN:
-                            if (File.Exists(convertFilePath + ".stl")) {
-                                convertFilePath += "(mqo to STLbin)";
-                            }
-                            metasequoiaToStlBin(metasequoia, convertFilePath + ".stl");
-                            break;
-                        case STL_TEXT:
-                            if (File.Exists(convertFilePath + ".stl")) {
-                                convertFilePath += "(mqo to STLtext)";
-                            }
-                            metasequoiaToStlText(metasequoia, convertFilePath + ".stl");
-                            break;
-                        case WAVEFRONT_OBJ:
-                            if (File.Exists(convertFilePath + ".obj")) {
-                                convertFilePath += "(mqo to obj)";
-                            }
-                            metasequoiaToWavefrontObj(metasequoia, convertFilePath + ".obj");
-                            break;
-                        }
+                }
+                // Convert from Metasequoia model
+                if (null != metasequoia) {
+                    switch (convertTo) {
+                    case STL_BIN:
+                        convertedModel = metasequoiaToStlBin(metasequoia);
+                        break;
+                    case STL_TEXT:
+                        convertedModel = metasequoiaToStlText(metasequoia);
+                        break;
+                    case WAVEFRONT_OBJ:
+                        convertedModel = metasequoiaToWavefrontObj(metasequoia);
+                        break;
                     }
-                } catch (Exception ex) {
-                    Console.WriteLine(ex);
-                    Console.ReadKey();
+                }
+
+                // Save & Normalize
+                if (null != convertedModel) {
+                    if (mNomalizeFlg) {
+                        convertedModel.Normalize(mScale);
+                    }
+                    convertedModel.Save(saveFilePath);
                 }
             }
         }
 
         #region Convert from STL(text) model
-        static void stlTextToStlBin(StlText stl, string filePath) {
+        static StlBin stlTextToStlBin(StlText stl) {
             var output = new StlBin();
             foreach (var obj in stl.ObjectList) {
                 var curObject = new StlBin.Object();
@@ -192,10 +190,10 @@ namespace ModelConverter {
                 }
                 output.ObjectList.Add(curObject);
             }
-            output.Save(filePath);
+            return output;
         }
 
-        static void stlTextToWavefrontObj(StlText stl, string filePath) {
+        static WavefrontObj stlTextToWavefrontObj(StlText stl) {
             var output = new WavefrontObj();
             foreach (var obj in stl.ObjectList) {
                 var curObject = new WavefrontObj.Object();
@@ -215,10 +213,10 @@ namespace ModelConverter {
                 }
                 output.ObjectList.Add(curObject);
             }
-            output.Save(filePath);
+            return output;
         }
 
-        static void stlTextToMetasequoia(StlText stl, string filePath) {
+        static Metasequoia stlTextToMetasequoia(StlText stl) {
             var output = new Metasequoia();
             foreach (var obj in stl.ObjectList) {
                 var curObject = new Metasequoia.Object();
@@ -240,12 +238,12 @@ namespace ModelConverter {
                 }
                 output.ObjectList.Add(curObject);
             }
-            output.Save(filePath);
+            return output;
         }
         #endregion
 
         #region Convert from STL(bin) model
-        static void stlBinToStlText(StlBin stl, string filePath) {
+        static StlText stlBinToStlText(StlBin stl) {
             var output = new StlText();
             foreach (var obj in stl.ObjectList) {
                 var curObject = new StlText.Object();
@@ -261,10 +259,10 @@ namespace ModelConverter {
                 }
                 output.ObjectList.Add(curObject);
             }
-            output.Save(filePath);
+            return output;
         }
 
-        static void stlBinToWavefrontObj(StlBin stl, string filePath) {
+        static WavefrontObj stlBinToWavefrontObj(StlBin stl) {
             var output = new WavefrontObj();
             foreach (var obj in stl.ObjectList) {
                 var curObject = new WavefrontObj.Object();
@@ -284,10 +282,10 @@ namespace ModelConverter {
                 }
                 output.ObjectList.Add(curObject);
             }
-            output.Save(filePath);
+            return output;
         }
 
-        static void stlBinToMetasequoia(StlBin stl, string filePath) {
+        static Metasequoia stlBinToMetasequoia(StlBin stl) {
             var output = new Metasequoia();
             foreach (var obj in stl.ObjectList) {
                 var curObject = new Metasequoia.Object();
@@ -309,13 +307,13 @@ namespace ModelConverter {
                 }
                 output.ObjectList.Add(curObject);
             }
-            output.Save(filePath);
+            return output;
         }
         #endregion
 
         #region Convert from WavefrontObj model
-        static void wavefrontObjToStlBin(WavefrontObj obj, string filePath) {
-            Console.WriteLine("STLはマテリアル情報を持てないため、マテリアル情報が消えます");
+        static StlBin wavefrontObjToStlBin(WavefrontObj obj) {
+            Console.WriteLine("STLはマテリアル情報を持てないため、マテリアル情報は消えます");
             obj.ToTriangle();
             var output = new StlBin();
             foreach (var o in obj.ObjectList) {
@@ -335,11 +333,11 @@ namespace ModelConverter {
                 }
                 output.ObjectList.Add(curObject);
             }
-            output.Save(filePath);
+            return output;
         }
 
-        static void wavefrontObjToStlText(WavefrontObj obj, string filePath) {
-            Console.WriteLine("STLはマテリアル情報を持てないため、マテリアル情報が消えます");
+        static StlText wavefrontObjToStlText(WavefrontObj obj) {
+            Console.WriteLine("STLはマテリアル情報を持てないため、マテリアル情報は消えます");
             obj.ToTriangle();
             var output = new StlText();
             foreach (var o in obj.ObjectList) {
@@ -359,13 +357,13 @@ namespace ModelConverter {
                 }
                 output.ObjectList.Add(curObject);
             }
-            output.Save(filePath);
+            return output;
         }
 
-        static void wavefrontObjToMetasequoia(WavefrontObj obj, string filePath) {
+        static Metasequoia wavefrontObjToMetasequoia(WavefrontObj obj) {
             var output = new Metasequoia();
             if (obj.VertexList.Count == 0) {
-                return;
+                return null;
             }
             foreach (var m in obj.MaterialList) {
                 var color = m.Ambient.Norm;
@@ -407,7 +405,7 @@ namespace ModelConverter {
                             if (obj.VertexList.Count <= idx || idx < 0) {
                                 Console.WriteLine("VertexList out of range (Max:{0}, Value:{1}", obj.VertexList.Count - 1, idx);
                                 Console.ReadKey();
-                                return;
+                                return null;
                             }
                             curObject.VertexList.Add(obj.VertexList[idx]);
                             surfaceVertexIdx.Add(idx);
@@ -419,7 +417,7 @@ namespace ModelConverter {
                         if (obj.UvList.Count <= idx || idx < 0) {
                             Console.WriteLine("UV List out of range (Max:{0}, Value:{1}", obj.UvList.Count - 1, idx);
                             Console.ReadKey();
-                            return;
+                            return null;
                         }
                         var uv = obj.UvList[idx];
                         curSurface.UvList.Add(new float[] { uv[0], uv[1] });
@@ -428,13 +426,13 @@ namespace ModelConverter {
                 }
                 output.ObjectList.Add(curObject);
             }
-            output.Save(filePath);
+            return output;
         }
         #endregion
 
         #region Convert from Metasequoia model
-        static void metasequoiaToStlBin(Metasequoia mqo, string filePath) {
-            Console.WriteLine("STLはマテリアル情報を持てないため、マテリアル情報が消えます");
+        static StlBin metasequoiaToStlBin(Metasequoia mqo) {
+            Console.WriteLine("STLはマテリアル情報を持てないため、マテリアル情報は消えます");
             mqo.ToTriangle();
             var output = new StlBin();
             foreach (var obj in mqo.ObjectList) {
@@ -454,11 +452,11 @@ namespace ModelConverter {
                 }
                 output.ObjectList.Add(curObject);
             }
-            output.Save(filePath);
+            return output;
         }
 
-        static void metasequoiaToStlText(Metasequoia mqo, string filePath) {
-            Console.WriteLine("STLはマテリアル情報を持てないため、マテリアル情報が消えます");
+        static StlText metasequoiaToStlText(Metasequoia mqo) {
+            Console.WriteLine("STLはマテリアル情報を持てないため、マテリアル情報は消えます");
             mqo.ToTriangle();
             var output = new StlText();
             foreach (var obj in mqo.ObjectList) {
@@ -478,10 +476,10 @@ namespace ModelConverter {
                 }
                 output.ObjectList.Add(curObject);
             }
-            output.Save(filePath);
+            return output;
         }
 
-        static void metasequoiaToWavefrontObj(Metasequoia mqo, string filePath) {
+        static WavefrontObj metasequoiaToWavefrontObj(Metasequoia mqo) {
             var output = new WavefrontObj();
             foreach (var m in mqo.MaterialList) {
                 var color = new vec3(m.R, m.G, m.B);
@@ -545,7 +543,7 @@ namespace ModelConverter {
                 }
                 output.ObjectList.Add(curObject);
             }
-            output.Save(filePath);
+            return output;
         }
         #endregion
     }
