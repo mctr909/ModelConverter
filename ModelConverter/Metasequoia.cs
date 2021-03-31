@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 
 class Metasequoia : IModel {
     public struct Object {
@@ -47,6 +48,21 @@ class Metasequoia : IModel {
     public Metasequoia() { }
 
     public Metasequoia(string filePath) {
+        var zipextFile = "";
+        if (".mqoz" == Path.GetExtension(filePath)) {
+            foreach (var e in ZipFile.OpenRead(filePath).Entries) {
+                if (".mqo" == Path.GetExtension(e.Name)) {
+                    zipextFile = AppContext.BaseDirectory + e.Name;
+                    e.ExtractToFile(zipextFile);
+                    filePath = zipextFile;
+                    break;
+                }
+            }
+            if (string.IsNullOrEmpty(zipextFile)) {
+                return;
+            }
+        }
+
         using (var fs = new StreamReader(filePath)) {
             while (!fs.EndOfStream) {
                 var line = fs.ReadLine();
@@ -82,8 +98,12 @@ class Metasequoia : IModel {
                 }
             }
         }
+        
+        if (!string.IsNullOrEmpty(zipextFile)) {
+            File.Delete(zipextFile);
+        }
     }
-
+ 
     public void Save(string filePath) {
         using(var fs = new StreamWriter(filePath)) {
             fs.WriteLine("Metasequoia Document");
@@ -100,7 +120,7 @@ class Metasequoia : IModel {
                 fs.WriteLine("\tvisible 15");
                 fs.WriteLine("\tlocking 0");
                 fs.WriteLine("\tshading 1");
-                fs.WriteLine("\tfacet 30");
+                fs.WriteLine("\tfacet 45");
                 fs.WriteLine("\tnormal_weight 1");
                 fs.WriteLine("\tcolor 0.5 0.5 0.5");
                 fs.WriteLine("\tcolor_type 0");

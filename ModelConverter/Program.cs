@@ -80,6 +80,7 @@ namespace ModelConverter {
                     wavefrontObj = new WavefrontObj(filePath);
                     break;
                 case ".mqo":
+                case ".mqoz":
                     metasequoia = new Metasequoia(filePath);
                     break;
                 }
@@ -112,6 +113,9 @@ namespace ModelConverter {
                     case STL_BIN:
                         convertedModel = stlTextToStlBin(stlText);
                         break;
+                    case STL_TEXT:
+                        convertedModel = stlText;
+                        break;
                     case WAVEFRONT_OBJ:
                         convertedModel = stlTextToWavefrontObj(stlText);
                         break;
@@ -123,6 +127,9 @@ namespace ModelConverter {
                 // Convert from STL(bin) model
                 if (null != stlBin) {
                     switch (convertTo) {
+                    case STL_BIN:
+                        convertedModel = stlBin;
+                        break;
                     case STL_TEXT:
                         convertedModel = stlBinToStlText(stlBin);
                         break;
@@ -143,6 +150,9 @@ namespace ModelConverter {
                     case STL_TEXT:
                         convertedModel = wavefrontObjToStlText(wavefrontObj);
                         break;
+                    case WAVEFRONT_OBJ:
+                        convertedModel = wavefrontObj;
+                        break;
                     case METASEQUOIA:
                         convertedModel = wavefrontObjToMetasequoia(wavefrontObj);
                         break;
@@ -159,6 +169,9 @@ namespace ModelConverter {
                         break;
                     case WAVEFRONT_OBJ:
                         convertedModel = metasequoiaToWavefrontObj(metasequoia);
+                        break;
+                    case METASEQUOIA:
+                        convertedModel = metasequoia;
                         break;
                     }
                 }

@@ -217,7 +217,7 @@ class WavefrontObj : IModel {
                     loadMaterial(Path.GetDirectoryName(filePath), cols[1]);
                     break;
                 case "usemtl":
-                    curMaterial = cols[1].Replace("\"", "");
+                    curMaterial = line.Substring(2).Replace("\"", "");
                     break;
                 case "l":
                     break;
@@ -253,7 +253,7 @@ class WavefrontObj : IModel {
                     curObject = new Object();
                     curObject.SurfaceList = new List<Surface>();
                     if (2 <= cols.Length) {
-                        curObject.Name = cols[1].Replace("\"", "");
+                        curObject.Name = line.Substring(2).Replace("\"", "");
                     }
                     break;
                 case "f":
