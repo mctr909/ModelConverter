@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "ModelConverter": {
+      "commandName": "Project",
+      "commandLineArgs": "C:\\Users\\owner\\Desktop\\AAA.obj"
+    }
+  }
+}
