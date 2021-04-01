@@ -34,11 +34,10 @@ class Metasequoia : IModel {
     public List<Material> MaterialList = new List<Material>();
     public List<Object> ObjectList = new List<Object>();
 
-    private string mCurrentChunk;
-    private List<string> mSkipChunks = new List<string> {
+    string mCurrentChunk;
+    List<string> mSkipChunks = new List<string> {
         "BackImage",
         "Blob",
-        "CodePage",
         "IncludeXml",
         "Scene",
         "Thumbnail",
@@ -75,6 +74,7 @@ class Metasequoia : IModel {
                 case "Metasequoia":
                 case "Format":
                 case "Ver":
+                case "CodePage":
                 case "Eof":
                     mCurrentChunk = "";
                     break;
@@ -98,12 +98,12 @@ class Metasequoia : IModel {
                 }
             }
         }
-        
+
         if (!string.IsNullOrEmpty(zipextFile)) {
             File.Delete(zipextFile);
         }
     }
- 
+
     public void Save(string filePath) {
         var fileName = Path.GetFileNameWithoutExtension(filePath);
         var textFilePath = AppContext.BaseDirectory + fileName;
@@ -112,7 +112,7 @@ class Metasequoia : IModel {
             fs.WriteLine("Format Text Ver 1.1");
             fs.WriteLine();
             saveMaterial(fs);
-            foreach(var obj in ObjectList) {
+            foreach (var obj in ObjectList) {
                 fs.WriteLine("Object \"" + obj.Name + "\" {");
                 fs.WriteLine("\tdepth 0");
                 fs.WriteLine("\tfolding 0");
@@ -260,7 +260,7 @@ class Metasequoia : IModel {
         }
     }
 
-    private void loadMaterial(StreamReader fs) {
+    void loadMaterial(StreamReader fs) {
         while (!fs.EndOfStream) {
             var line = fs.ReadLine().Replace("\t", "").TrimStart();
             if (string.IsNullOrEmpty(line)) {
@@ -331,7 +331,7 @@ class Metasequoia : IModel {
         }
     }
 
-    private void saveMaterial(StreamWriter fs) {
+    void saveMaterial(StreamWriter fs) {
         if (MaterialList == null || MaterialList.Count == 0) {
             return;
         }
@@ -359,7 +359,7 @@ class Metasequoia : IModel {
         fs.WriteLine("}");
     }
 
-    private void loadObject(StreamReader fs, string name) {
+    void loadObject(StreamReader fs, string name) {
         var obj = new Object();
         obj.Name = name;
         while (!fs.EndOfStream) {
@@ -409,7 +409,7 @@ class Metasequoia : IModel {
         return;
     }
 
-    private List<vec3> loadVertex(StreamReader fs) {
+    List<vec3> loadVertex(StreamReader fs) {
         float x, y, z;
         var vertex = new List<vec3>();
         while (!fs.EndOfStream) {
@@ -431,12 +431,12 @@ class Metasequoia : IModel {
         return null;
     }
 
-    private List<vec3> loadBVertex(StreamReader fs) {
+    List<vec3> loadBVertex(StreamReader fs) {
         var vertex = new List<vec3>();
         return vertex;
     }
 
-    private List<Surface> loadFace(StreamReader fs) {
+    List<Surface> loadFace(StreamReader fs) {
         var surfaceList = new List<Surface>();
         while (!fs.EndOfStream) {
             var line = fs.ReadLine();

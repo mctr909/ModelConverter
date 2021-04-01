@@ -70,28 +70,6 @@ namespace ModelConverter {
                 var fileName = Path.GetFileNameWithoutExtension(filePath);
                 var ext = Path.GetExtension(filePath);
 
-                // Load model
-                StlText stlText = null;
-                StlBin stlBin = null;
-                WavefrontObj wavefrontObj = null;
-                Metasequoia metasequoia = null;
-                switch (ext.ToLower()) {
-                case ".stl":
-                    stlText = new StlText(filePath);
-                    if (0 == stlText.ObjectList.Count) {
-                        stlText = null;
-                        stlBin = new StlBin(filePath);
-                    }
-                    break;
-                case ".obj":
-                    wavefrontObj = new WavefrontObj(filePath);
-                    break;
-                case ".mqo":
-                case ".mqoz":
-                    metasequoia = new Metasequoia(filePath);
-                    break;
-                }
-
                 // savefile path
                 var saveExt = "";
                 switch (convertTo) {
@@ -113,74 +91,107 @@ namespace ModelConverter {
                 }
                 saveFilePath = tmpFilePath;
 
+                // Load model
+                StlText stlText = null;
+                StlBin stlBin = null;
+                WavefrontObj wavefrontObj = null;
+                Metasequoia metasequoia = null;
+                try {
+                    switch (ext.ToLower()) {
+                    case ".stl":
+                        stlText = new StlText(filePath);
+                        if (0 == stlText.ObjectList.Count) {
+                            stlText = null;
+                            stlBin = new StlBin(filePath);
+                        }
+                        break;
+                    case ".obj":
+                        wavefrontObj = new WavefrontObj(filePath);
+                        break;
+                    case ".mqo":
+                    case ".mqoz":
+                        metasequoia = new Metasequoia(filePath);
+                        break;
+                    }
+                } catch (Exception ex) {
+                    Console.WriteLine(ex);
+                    Console.ReadKey();
+                }
+
+                // Convert
                 IModel convertedModel = null;
-                // Convert from STL(text) model
-                if (null != stlText) {
-                    switch (convertTo) {
-                    case STL_BIN:
-                        convertedModel = stlTextToStlBin(stlText);
-                        break;
-                    case STL_TEXT:
-                        convertedModel = stlText;
-                        break;
-                    case WAVEFRONT_OBJ:
-                        convertedModel = stlTextToWavefrontObj(stlText);
-                        break;
-                    case METASEQUOIA:
-                        convertedModel = stlTextToMetasequoia(stlText);
-                        break;
+                try {
+                    // Convert from STL(text) model
+                    if (null != stlText) {
+                        switch (convertTo) {
+                        case STL_BIN:
+                            convertedModel = stlTextToStlBin(stlText);
+                            break;
+                        case STL_TEXT:
+                            convertedModel = stlText;
+                            break;
+                        case WAVEFRONT_OBJ:
+                            convertedModel = stlTextToWavefrontObj(stlText);
+                            break;
+                        case METASEQUOIA:
+                            convertedModel = stlTextToMetasequoia(stlText);
+                            break;
+                        }
                     }
-                }
-                // Convert from STL(bin) model
-                if (null != stlBin) {
-                    switch (convertTo) {
-                    case STL_BIN:
-                        convertedModel = stlBin;
-                        break;
-                    case STL_TEXT:
-                        convertedModel = stlBinToStlText(stlBin);
-                        break;
-                    case WAVEFRONT_OBJ:
-                        convertedModel = stlBinToWavefrontObj(stlBin);
-                        break;
-                    case METASEQUOIA:
-                        convertedModel = stlBinToMetasequoia(stlBin);
-                        break;
+                    // Convert from STL(bin) model
+                    if (null != stlBin) {
+                        switch (convertTo) {
+                        case STL_BIN:
+                            convertedModel = stlBin;
+                            break;
+                        case STL_TEXT:
+                            convertedModel = stlBinToStlText(stlBin);
+                            break;
+                        case WAVEFRONT_OBJ:
+                            convertedModel = stlBinToWavefrontObj(stlBin);
+                            break;
+                        case METASEQUOIA:
+                            convertedModel = stlBinToMetasequoia(stlBin);
+                            break;
+                        }
                     }
-                }
-                // Convert from WavefrontObj model
-                if (null != wavefrontObj) {
-                    switch (convertTo) {
-                    case STL_BIN:
-                        convertedModel = wavefrontObjToStlBin(wavefrontObj);
-                        break;
-                    case STL_TEXT:
-                        convertedModel = wavefrontObjToStlText(wavefrontObj);
-                        break;
-                    case WAVEFRONT_OBJ:
-                        convertedModel = wavefrontObj;
-                        break;
-                    case METASEQUOIA:
-                        convertedModel = wavefrontObjToMetasequoia(wavefrontObj);
-                        break;
+                    // Convert from WavefrontObj model
+                    if (null != wavefrontObj) {
+                        switch (convertTo) {
+                        case STL_BIN:
+                            convertedModel = wavefrontObjToStlBin(wavefrontObj);
+                            break;
+                        case STL_TEXT:
+                            convertedModel = wavefrontObjToStlText(wavefrontObj);
+                            break;
+                        case WAVEFRONT_OBJ:
+                            convertedModel = wavefrontObj;
+                            break;
+                        case METASEQUOIA:
+                            convertedModel = wavefrontObjToMetasequoia(wavefrontObj);
+                            break;
+                        }
                     }
-                }
-                // Convert from Metasequoia model
-                if (null != metasequoia) {
-                    switch (convertTo) {
-                    case STL_BIN:
-                        convertedModel = metasequoiaToStlBin(metasequoia);
-                        break;
-                    case STL_TEXT:
-                        convertedModel = metasequoiaToStlText(metasequoia);
-                        break;
-                    case WAVEFRONT_OBJ:
-                        convertedModel = metasequoiaToWavefrontObj(metasequoia);
-                        break;
-                    case METASEQUOIA:
-                        convertedModel = metasequoia;
-                        break;
+                    // Convert from Metasequoia model
+                    if (null != metasequoia) {
+                        switch (convertTo) {
+                        case STL_BIN:
+                            convertedModel = metasequoiaToStlBin(metasequoia);
+                            break;
+                        case STL_TEXT:
+                            convertedModel = metasequoiaToStlText(metasequoia);
+                            break;
+                        case WAVEFRONT_OBJ:
+                            convertedModel = metasequoiaToWavefrontObj(metasequoia);
+                            break;
+                        case METASEQUOIA:
+                            convertedModel = metasequoia;
+                            break;
+                        }
                     }
+                } catch (Exception ex) {
+                    Console.WriteLine(ex);
+                    Console.ReadKey();
                 }
 
                 // Save & Normalize
@@ -386,7 +397,7 @@ namespace ModelConverter {
                 return null;
             }
             foreach (var m in obj.MaterialList) {
-                var color = m.Ambient.Norm;
+                var color = (m.Ambient.Abs < m.Diffuse.Abs) ? m.Diffuse.Norm : m.Ambient.Norm;
                 var mat = new Metasequoia.Material();
                 mat.Name = m.Name;
                 mat.R = color.x;
@@ -409,42 +420,33 @@ namespace ModelConverter {
                 output.MaterialList.Add(mat);
             }
             foreach (var o in obj.ObjectList) {
-                var curObject = new Metasequoia.Object();
-                curObject.Name = o.Name;
-                curObject.SurfaceList = new List<Metasequoia.Surface>();
-                curObject.VertexList = new List<vec3>();
-                var surfaceVertexIdx = new List<int>();
+                var curObj = new Metasequoia.Object();
+                curObj.Name = o.Name;
+                curObj.SurfaceList = new List<Metasequoia.Surface>();
+                curObj.VertexList = new List<vec3>();
+                var curObjVertexIdx = new List<int>();
                 foreach (var s in o.SurfaceList) {
                     var curSurface = new Metasequoia.Surface();
                     curSurface.MaterialIndex = obj.GetMaterialIndex(s.MaterialName);
+                    // Vertex
                     curSurface.VertexIndex = new List<int>();
-                    curSurface.UvList = new List<float[]>();
-                    for (int iv = s.VertexIndex.Count - 1; 0 <= iv; iv--) {
-                        var idx = s.VertexIndex[iv] - 1;
-                        if (!surfaceVertexIdx.Contains(idx)) {
-                            if (obj.VertexList.Count <= idx || idx < 0) {
-                                Console.WriteLine("VertexList out of range (Max:{0}, Value:{1}", obj.VertexList.Count - 1, idx);
-                                Console.ReadKey();
-                                return null;
-                            }
-                            curObject.VertexList.Add(obj.VertexList[idx]);
-                            surfaceVertexIdx.Add(idx);
+                    for (int i = s.VertexIndex.Count - 1; 0 <= i; i--) {
+                        var idx = s.VertexIndex[i] - 1;
+                        if (!curObjVertexIdx.Contains(idx)) {
+                            curObjVertexIdx.Add(idx);
+                            curObj.VertexList.Add(obj.VertexList[idx]);
                         };
-                        curSurface.VertexIndex.Add(surfaceVertexIdx.IndexOf(idx));
+                        curSurface.VertexIndex.Add(curObjVertexIdx.IndexOf(idx));
                     }
-                    for (int it = s.UvIndex.Count - 1; 0 <= it; it--) {
-                        var idx = s.UvIndex[it] - 1;
-                        if (obj.UvList.Count <= idx || idx < 0) {
-                            Console.WriteLine("UV List out of range (Max:{0}, Value:{1}", obj.UvList.Count - 1, idx);
-                            Console.ReadKey();
-                            return null;
-                        }
-                        var uv = obj.UvList[idx];
-                        curSurface.UvList.Add(new float[] { uv[0], uv[1] });
+                    // UV
+                    curSurface.UvList = new List<float[]>();
+                    for (int i = 0; i < s.UvIndex.Count; i++) {
+                        var uv = obj.UvList[s.UvIndex[i] - 1];
+                        curSurface.UvList.Add(uv);
                     }
-                    curObject.SurfaceList.Add(curSurface);
+                    curObj.SurfaceList.Add(curSurface);
                 }
-                output.ObjectList.Add(curObject);
+                output.ObjectList.Add(curObj);
             }
             return output;
         }
