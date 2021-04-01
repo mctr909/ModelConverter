@@ -9,15 +9,15 @@ namespace ModelConverter {
         const string WAVEFRONT_OBJ = "2 : Wavefront OBJ";
         const string METASEQUOIA = "3 : Metasequoia";
 
-        static bool mNomalizeFlg = false;
-        static float mScale = 1.0f;
-
         static readonly List<string> TYPE_LIST = new List<string> {
             STL_BIN,
             STL_TEXT,
             WAVEFRONT_OBJ,
             METASEQUOIA
         };
+
+        static bool mNomalizeFlg = false;
+        static float mScale = 1.0f;
 
         static void Main(string[] args) {
             if (args.Length == 0) {
