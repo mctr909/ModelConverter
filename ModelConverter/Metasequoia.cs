@@ -105,7 +105,9 @@ class Metasequoia : IModel {
     }
  
     public void Save(string filePath) {
-        using(var fs = new StreamWriter(filePath)) {
+        var fileName = Path.GetFileNameWithoutExtension(filePath);
+        var textFilePath = AppContext.BaseDirectory + fileName;
+        using (var fs = new StreamWriter(textFilePath)) {
             fs.WriteLine("Metasequoia Document");
             fs.WriteLine("Format Text Ver 1.1");
             fs.WriteLine();
@@ -160,6 +162,12 @@ class Metasequoia : IModel {
                 fs.WriteLine("}");
             }
         }
+
+        using (var z = ZipFile.Open(filePath, ZipArchiveMode.Create)) {
+            z.CreateEntryFromFile(textFilePath, fileName + ".mqo");
+        }
+
+        File.Delete(textFilePath);
     }
 
     public void Normalize(float scale = 1) {

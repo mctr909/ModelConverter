@@ -20,6 +20,13 @@ namespace ModelConverter {
         };
 
         static void Main(string[] args) {
+            if (args.Length == 0) {
+                Console.WriteLine("このexeファイルのアイコンに変換するファイルをドラッグ&ドロップしてください");
+                Console.WriteLine("一度に複数のファイルを変換できます");
+                Console.ReadKey();
+                return;
+            }
+
             foreach (var t in TYPE_LIST) {
                 Console.WriteLine(t);
             }
@@ -38,14 +45,14 @@ namespace ModelConverter {
             }
             string convertTo = TYPE_LIST[typeNo];
 
-            Console.Write("正規化しますか?[y/n]：");
+            Console.Write("スケールを変更しますか?[y/n]：");
             keyLine = Console.ReadLine();
             if ("y" == keyLine.ToLower()) {
                 mNomalizeFlg = true;
                 Console.Write("スケールを入力してください(単位:mm)：");
                 keyLine = Console.ReadLine();
                 if (!float.TryParse(keyLine, out mScale)) {
-                    Console.WriteLine("数字で選択してください");
+                    Console.WriteLine("数字を入力してください");
                     Console.ReadKey();
                     return;
                 }
@@ -96,7 +103,7 @@ namespace ModelConverter {
                     saveExt = ".obj";
                     break;
                 case METASEQUOIA:
-                    saveExt = ".mqo";
+                    saveExt = ".mqoz";
                     break;
                 }
                 var saveFilePath = fileDir + "\\" + fileName;
