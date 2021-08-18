@@ -4,16 +4,18 @@ using System.IO;
 
 namespace ModelConverter {
     class Program {
-        const string STL_BIN = "0 : STL(バイナリ)";
-        const string STL_TEXT = "1 : STL(テキスト)";
-        const string WAVEFRONT_OBJ = "2 : Wavefront OBJ";
-        const string METASEQUOIA = "3 : Metasequoia";
+        const string STL_BIN = "0 : STLバイナリ(.stl)";
+        const string STL_TEXT = "1 : STLテキスト(.stl)";
+        const string WAVEFRONT_OBJ = "2 : Wavefront OBJ(.obj)";
+        const string METASEQUOIA = "3 : Metasequoia(.mqoz)";
+        const string COLLADA = "4 : Collada(.dae)";
 
         static readonly List<string> TYPE_LIST = new List<string> {
             STL_BIN,
             STL_TEXT,
             WAVEFRONT_OBJ,
-            METASEQUOIA
+            METASEQUOIA,
+            COLLADA
         };
 
         static bool mNomalizeFlg = false;
@@ -58,6 +60,12 @@ namespace ModelConverter {
                 }
             }
 
+            Console.Write("UVの上下を入れ替えますか?[y/n]：");
+            var invertUV = InvertUV.None;
+            if ("y" == Console.ReadLine()) {
+                invertUV |= InvertUV.V;
+            }
+
             for (int argc = 0; argc < args.Length; argc++) {
                 var filePath = args[argc];
                 if (!File.Exists(filePath)) {
@@ -83,6 +91,9 @@ namespace ModelConverter {
                 case METASEQUOIA:
                     saveExt = ".mqoz";
                     break;
+                case COLLADA:
+                    saveExt = ".dae";
+                    break;
                 }
                 var saveFilePath = fileDir + "\\" + fileName;
                 var tmpFilePath = saveFilePath + saveExt;
@@ -96,6 +107,7 @@ namespace ModelConverter {
                 StlBin stlBin = null;
                 WavefrontObj wavefrontObj = null;
                 Metasequoia metasequoia = null;
+                Collada collada = null;
                 try {
                     switch (ext.ToLower()) {
                     case ".stl":
@@ -112,6 +124,9 @@ namespace ModelConverter {
                     case ".mqoz":
                         metasequoia = new Metasequoia(filePath);
                         break;
+                    case ".dae":
+                        collada = new Collada(filePath);
+                        break;
                     }
                 } catch (Exception ex) {
                     Console.WriteLine(ex);
@@ -119,7 +134,7 @@ namespace ModelConverter {
                 }
 
                 // Convert
-                IModel convertedModel = null;
+                BaseModel convertedModel = null;
                 try {
                     // Convert from STL(text) model
                     if (null != stlText) {
@@ -199,6 +214,7 @@ namespace ModelConverter {
                     if (mNomalizeFlg) {
                         convertedModel.Normalize(mScale);
                     }
+                    convertedModel.InvertUV = invertUV;
                     convertedModel.Save(saveFilePath);
                 }
             }

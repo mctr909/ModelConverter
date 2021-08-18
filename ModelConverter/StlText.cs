@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 
-class StlText : IModel {
+class StlText : BaseModel {
     public struct Surface {
         public vec3 Norm;
         public vec3 V1;
@@ -19,13 +19,13 @@ class StlText : IModel {
 
     public StlText() { }
 
-    public StlText(string filePath) {
+    public StlText(string path) {
         var curSurface = new Surface();
         var curVertex = new List<vec3>();
         var curObject = new Object();
         curObject.SurfaceList = new List<Surface>();
 
-        using (var fs = new StreamReader(filePath)) {
+        using (var fs = new StreamReader(path)) {
             while (!fs.EndOfStream) {
                 var line = fs.ReadLine().Replace("\t", " ").TrimStart().Replace("  ", " ");
                 var cols = line.Split(" ");
@@ -78,8 +78,8 @@ class StlText : IModel {
         }
     }
 
-    public void Save(string filePath) {
-        var fs = new StreamWriter(filePath);
+    public override void Save(string path) {
+        var fs = new StreamWriter(path);
         foreach (var obj in ObjectList) {
             fs.WriteLine("solid {0}", obj.Name);
             foreach (var s in obj.SurfaceList) {
@@ -96,7 +96,7 @@ class StlText : IModel {
         fs.Close();
     }
 
-    public void Normalize(float scale = 1) {
+    public override void Normalize(float scale = 1) {
         var ofs = new vec3(float.MaxValue, float.MaxValue, float.MaxValue);
         foreach (var obj in ObjectList) {
             foreach (var s in obj.SurfaceList) {

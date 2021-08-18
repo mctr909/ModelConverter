@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
-class StlBin : IModel {
+class StlBin : BaseModel {
     public struct Surface {
         public vec3 Norm;
         public vec3 V1;
@@ -20,12 +20,12 @@ class StlBin : IModel {
 
     public StlBin() { }
 
-    public StlBin(string filePath) {
+    public StlBin(string path) {
         var arrName = new byte[80];
         var arrCount = new byte[4];
         var arrFloat = new byte[4];
         var arrReserved = new byte[2];
-        using (var fs = new FileStream(filePath, FileMode.Open)) {
+        using (var fs = new FileStream(path, FileMode.Open)) {
             while (fs.Position < fs.Length) {
                 var curObject = new Object();
                 curObject.SurfaceList = new List<Surface>();
@@ -77,9 +77,9 @@ class StlBin : IModel {
         }
     }
 
-    public void Save(string filePath) {
+    public override void Save(string path) {
         var arrReserved = new byte[2];
-        var fs = new FileStream(filePath, FileMode.Create);
+        var fs = new FileStream(path, FileMode.Create);
         foreach (var obj in ObjectList) {
             byte[] tName = new byte[] { 0 };
             if (!string.IsNullOrEmpty(obj.Name)) {
@@ -113,7 +113,7 @@ class StlBin : IModel {
         fs.Close();
     }
 
-    public void Normalize(float scale = 1) {
+    public override void Normalize(float scale = 1) {
         var ofs = new vec3(float.MaxValue, float.MaxValue, float.MaxValue);
         foreach (var obj in ObjectList) {
             foreach (var s in obj.SurfaceList) {

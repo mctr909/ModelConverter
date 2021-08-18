@@ -2,7 +2,7 @@
   "profiles": {
     "ModelConverter": {
       "commandName": "Project",
-      "commandLineArgs": ""
+      "commandLineArgs": "C:\\Users\\owner\\Desktop\\MMD\\Model\\Cinema4d\\LEO\\leoPolygon.dae"
     }
   }
 }

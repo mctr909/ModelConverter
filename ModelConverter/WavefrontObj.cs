@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 
-class WavefrontObj : IModel {
+class WavefrontObj : BaseModel {
     public struct Surface {
         public List<int> VertexIndex;
         public List<int> UvIndex;
@@ -160,30 +160,29 @@ class WavefrontObj : IModel {
             if (BumpScale != 0) {
                 fs.Write(" -bm {0}", BumpScale);
             }
+            //fs.Write(" -imfchan");
+            //var imfchan = "";
+            //if (ChannelR) {
+            //    imfchan += " r";
+            //}
+            //if (ChannelG) {
+            //    imfchan += 0 < imfchan.Length ? " | g" : " g";
+            //}
+            //if (ChannelB) {
+            //    imfchan += 0 < imfchan.Length ? " | b" : " b";
+            //}
+            //if (ChannelM) {
+            //    imfchan += 0 < imfchan.Length ? " | m" : " m";
+            //}
+            //if (ChannelL) {
+            //    imfchan += 0 < imfchan.Length ? " | l" : " l";
+            //}
+            //if (ChannelZ) {
+            //    imfchan += 0 < imfchan.Length ? " | z" : " z";
+            //}
+            //fs.Write(imfchan);
 
-            fs.Write(" -imfchan");
-            var imfchan = "";
-            if (ChannelR) {
-                imfchan += " r";
-            }
-            if (ChannelG) {
-                imfchan += 0 < imfchan.Length ? " | g" : " g";
-            }
-            if (ChannelB) {
-                imfchan += 0 < imfchan.Length ? " | b" : " b";
-            }
-            if (ChannelM) {
-                imfchan += 0 < imfchan.Length ? " | m" : " m";
-            }
-            if (ChannelL) {
-                imfchan += 0 < imfchan.Length ? " | l" : " l";
-            }
-            if (ChannelZ) {
-                imfchan += 0 < imfchan.Length ? " | z" : " z";
-            }
-            fs.Write(imfchan);
-
-            fs.WriteLine(" " + FileName);
+            fs.WriteLine(" " + FileName.Replace("\"", ""));
         }
     }
 
@@ -194,12 +193,12 @@ class WavefrontObj : IModel {
 
     public WavefrontObj() { }
 
-    public WavefrontObj(string filePath) {
+    public WavefrontObj(string path) {
         var curMaterial = "";
         var curObject = new Object();
         curObject.SurfaceList = new List<Surface>();
 
-        using (var fs = new StreamReader(filePath)) {
+        using (var fs = new StreamReader(path)) {
             int row = 0;
             while (!fs.EndOfStream) {
                 var line = fs.ReadLine().Replace("\t", "").Replace("  ", " ").Trim();
@@ -214,7 +213,7 @@ class WavefrontObj : IModel {
 
                 switch (cols[0].ToLower()) {
                 case "mtllib":
-                    loadMaterial(Path.GetDirectoryName(filePath), cols[1]);
+                    loadMaterial(Path.GetDirectoryName(path), cols[1]);
                     break;
                 case "usemtl":
                     curMaterial = line.Substring(7).Replace("\"", "");
@@ -327,25 +326,72 @@ class WavefrontObj : IModel {
         }
     }
 
-    public void Save(string filePath) {
+    public override void Save(string path) {
         // Material
-        var mtlName = Path.GetFileNameWithoutExtension(filePath) + ".mtl";
-        var mtlPath = Path.GetDirectoryName(filePath) + "\\" + mtlName;
+        var mtlName = Path.GetFileNameWithoutExtension(path) + ".mtl";
+        var mtlPath = Path.GetDirectoryName(path) + "\\" + mtlName;
         saveMaterial(mtlPath);
-        var fs = new StreamWriter(filePath);
+        var fs = new StreamWriter(path);
         fs.WriteLine("mtllib {0}", mtlName);
+
         // Vertex
+        var vformat = "";
+        switch (SwapAxiz) {
+        case SwapAxiz.XYZ:
+            vformat = "v {0} {1} {2}";
+            break;
+        case SwapAxiz.XZY:
+            vformat = "v {0} {2} {1}";
+            break;
+        case SwapAxiz.YXZ:
+            vformat = "v {1} {0} {2}";
+            break;
+        case SwapAxiz.YZX:
+            vformat = "v {1} {2} {0}";
+            break;
+        case SwapAxiz.ZXY:
+            vformat = "v {2} {0} {1}";
+            break;
+        case SwapAxiz.ZYX:
+            vformat = "v {2} {1} {0}";
+            break;
+        }
+        var signx = SignX;
+        var signy = SignY;
+        var signz = SignZ;
         foreach (var v in VertexList) {
-            fs.WriteLine("v {0} {1} {2}", v.x, v.y, v.z);
+            fs.WriteLine(vformat, v.x * signx, v.y * signy, v.z * signz);
         }
+
         // UV
-        foreach (var v in UvList) {
-            fs.WriteLine("vt {0} {1}", v[0], v[1]);
+        string uvformat;
+        if (SwapUV) {
+            uvformat = "vt {1} {0}";
+        } else {
+            uvformat = "vt {0} {1}";
         }
+        if (InvertU && InvertV) {
+            foreach (var uv in UvList) {
+                fs.WriteLine(uvformat, 1.0 - uv[0], 1.0 - uv[1]);
+            }
+        } else if (InvertU) {
+            foreach (var uv in UvList) {
+                fs.WriteLine(uvformat, 1.0 - uv[0], uv[1]);
+            }
+        } else if (InvertV) {
+            foreach (var uv in UvList) {
+                fs.WriteLine(uvformat, uv[0], 1.0 - uv[1]);
+            }
+        } else {
+            foreach (var uv in UvList) {
+                fs.WriteLine(uvformat, uv[0], uv[1]);
+            }
+        }
+
         // Surface
         foreach (var obj in ObjectList) {
             var curMaterial = "";
-            fs.WriteLine("g {0}", obj.Name);
+            fs.WriteLine("g {0}", obj.Name.Replace("\"", ""));
             foreach (var s in obj.SurfaceList) {
                 if (curMaterial != s.MaterialName) {
                     fs.WriteLine("usemtl {0}", s.MaterialName);
@@ -357,8 +403,8 @@ class WavefrontObj : IModel {
                         fs.Write(" {0}/{1}", s.VertexIndex[i], s.UvIndex[i]);
                     }
                 } else {
-                    foreach (var v in s.VertexIndex) {
-                        fs.Write(" {0}", v);
+                    for (int i = 0; i < s.VertexIndex.Count; i++) {
+                        fs.Write(" {0}", s.VertexIndex[i]);
                     }
                 }
                 fs.WriteLine();
@@ -367,7 +413,7 @@ class WavefrontObj : IModel {
         fs.Close();
     }
 
-    public void Normalize(float scale = 1) {
+    public override void Normalize(float scale = 1) {
         var ofs = new vec3(float.MaxValue, float.MaxValue, float.MaxValue);
         foreach (var v in VertexList) {
             ofs.x = Math.Min(ofs.x, v.x);
@@ -540,36 +586,38 @@ class WavefrontObj : IModel {
 
         using(var fs = new StreamWriter(path)) {
             foreach(var m in MaterialList) {
-                fs.WriteLine("newmtl {0}", m.Name);
-                fs.WriteLine("\tKa {0} {1} {2}", m.Ambient.x, m.Ambient.y, m.Ambient.z);
-                fs.WriteLine("\tKd {0} {1} {2}", m.Diffuse.x, m.Diffuse.y, m.Diffuse.z);
-                fs.WriteLine("\tKs {0} {1} {2}", m.Specular.x, m.Specular.y, m.Specular.z);
-                fs.WriteLine("\tNs {0}", m.SpecularPower);
-                fs.WriteLine("\td {0}", m.Alpha);
-                if (null != m.TexAmbient) {
-                    fs.Write("\tmap_Ka");
-                    m.TexAmbient.Write(fs);
-                }
+                fs.WriteLine("newmtl {0}", m.Name.Replace("\"", ""));
+                fs.WriteLine("\tKd 1.0 1.0 1.0");
+                fs.WriteLine("\tKa 0.8 0.8 0.8");
+                fs.WriteLine("\tNs 5");
                 if (null != m.TexDiffuse) {
                     fs.Write("\tmap_Kd");
                     m.TexDiffuse.Write(fs);
                 }
-                if (null != m.TexSpecular) {
-                    fs.Write("\tmap_Ks");
-                    m.TexSpecular.Write(fs);
-                }
-                if (null != m.TexSpecularPower) {
-                    fs.Write("\tmap_Ns");
-                    m.TexSpecularPower.Write(fs);
-                }
-                if (null != m.TexAlapha) {
-                    fs.Write("\tmap_d");
-                    m.TexAlapha.Write(fs);
-                }
-                if (null != m.TexBumpMap) {
-                    fs.Write("\tbump");
-                    m.TexBumpMap.Write(fs);
-                }
+                //fs.WriteLine("\tKd {0} {1} {2}", m.Diffuse.x, m.Diffuse.y, m.Diffuse.z);
+                //fs.WriteLine("\tKa {0} {1} {2}", m.Ambient.x, m.Ambient.y, m.Ambient.z);
+                //fs.WriteLine("\tKs {0} {1} {2}", m.Specular.x, m.Specular.y, m.Specular.z);
+                //fs.WriteLine("\td {0}", m.Alpha);
+                //if (null != m.TexAmbient) {
+                //    fs.Write("\tmap_Ka");
+                //    m.TexAmbient.Write(fs);
+                //}
+                //if (null != m.TexSpecular) {
+                //    fs.Write("\tmap_Ks");
+                //    m.TexSpecular.Write(fs);
+                //}
+                //if (null != m.TexSpecularPower) {
+                //    fs.Write("\tmap_Ns");
+                //    m.TexSpecularPower.Write(fs);
+                //}
+                //if (null != m.TexAlapha) {
+                //    fs.Write("\tmap_d");
+                //    m.TexAlapha.Write(fs);
+                //}
+                //if (null != m.TexBumpMap) {
+                //    fs.Write("\tbump");
+                //    m.TexBumpMap.Write(fs);
+                //}
             }
         }
     }

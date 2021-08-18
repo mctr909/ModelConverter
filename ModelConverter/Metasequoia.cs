@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 
-class Metasequoia : IModel {
+class Metasequoia : BaseModel {
     public struct Object {
         public string Name;
         public List<vec3> VertexList;
@@ -46,14 +46,14 @@ class Metasequoia : IModel {
 
     public Metasequoia() { }
 
-    public Metasequoia(string filePath) {
+    public Metasequoia(string path) {
         var zipextFile = "";
-        if (".mqoz" == Path.GetExtension(filePath)) {
-            foreach (var e in ZipFile.OpenRead(filePath).Entries) {
+        if (".mqoz" == Path.GetExtension(path)) {
+            foreach (var e in ZipFile.OpenRead(path).Entries) {
                 if (".mqo" == Path.GetExtension(e.Name)) {
                     zipextFile = AppContext.BaseDirectory + e.Name;
                     e.ExtractToFile(zipextFile);
-                    filePath = zipextFile;
+                    path = zipextFile;
                     break;
                 }
             }
@@ -62,7 +62,7 @@ class Metasequoia : IModel {
             }
         }
 
-        using (var fs = new StreamReader(filePath)) {
+        using (var fs = new StreamReader(path)) {
             while (!fs.EndOfStream) {
                 var line = fs.ReadLine();
                 var cols = line.Split(" ");
@@ -104,8 +104,8 @@ class Metasequoia : IModel {
         }
     }
 
-    public void Save(string filePath) {
-        var fileName = Path.GetFileNameWithoutExtension(filePath);
+    public override void Save(string path) {
+        var fileName = Path.GetFileNameWithoutExtension(path);
         var textFilePath = AppContext.BaseDirectory + fileName;
         using (var fs = new StreamWriter(textFilePath)) {
             fs.WriteLine("Metasequoia Document");
@@ -163,14 +163,14 @@ class Metasequoia : IModel {
             }
         }
 
-        using (var z = ZipFile.Open(filePath, ZipArchiveMode.Create)) {
+        using (var z = ZipFile.Open(path, ZipArchiveMode.Create)) {
             z.CreateEntryFromFile(textFilePath, fileName + ".mqo");
         }
 
         File.Delete(textFilePath);
     }
 
-    public void Normalize(float scale = 1) {
+    public override void Normalize(float scale = 1) {
         var ofs = new vec3(float.MaxValue, float.MaxValue, float.MaxValue);
         foreach (var obj in ObjectList) {
             foreach (var v in obj.VertexList) {
