@@ -5,6 +5,84 @@ using System.Xml.Linq;
 
 namespace ModelConverter {
     class Collada : BaseModel {
+        static class TAG {
+            public const string INPUT = "input";
+            public const string VCOUNT = "vcount";
+
+            public const string SOURCE = "source";
+            public const string FLOAT_ARRAY = "float_array";
+            public const string NAME_ARRAY = "Name_array";
+            public const string ACCESSOR = "accessor";
+            public const string PARAM = "param";
+
+            public const string IMAGE = "image";
+            public const string INIT_FROM = "init_from";
+            public const string REF = "ref";
+
+            public const string EFFECT = "effect";
+            public const string PROFILE_COMMON = "profile_COMMON";
+            public const string NEW_PARAM = "newparam";
+            public const string SAMPLER2D = "sampler2D";
+            public const string INSTANCE_IMAGE = "instance_image";
+            public const string TECHNIQUE = "technique";
+            public const string BLINN = "blinn";
+            public const string AMBIENT = "ambient";
+            public const string DIFFUSE = "diffuse";
+            public const string SPECULAR = "specular";
+            public const string COLOR = "color";
+            public const string TEXTURE = "texture";
+
+            public const string MATERIAL = "material";
+            public const string INSTANCE_EFFECT = "instance_effect";
+
+            public const string GEOMETRY = "geometry";
+            public const string MESH = "mesh";
+            public const string VERTICES = "vertices";
+            public const string POLYLIST = "polylist";
+            public const string P = "p";
+
+            public const string CONTROLLER = "controller";
+            public const string SKIN = "skin";
+            public const string BIND_SHAPE_MATRIX = "bind_shape_matrix";
+            public const string JOINTS = "joints";
+            public const string VERTEX_WEIGHTS = "vertex_weights";
+            public const string V = "v";
+
+            public const string VISUAL_SCENE = "visual_scene";
+            public const string NODE = "node";
+            public const string ROTATE = "rotate";
+            public const string SCALE = "scale";
+            public const string TRANSLATE = "translate";
+            public const string INSTANCE_CONTROLLER = "instance_controller";
+            public const string INSTANCE_GEOMETRY = "instance_geometry";
+            public const string INSTANCE_MATERIAL = "instance_material";
+            public const string BIND_VERTEX_INPUT = "bind_vertex_input";
+            public const string BIND_MATERIAL = "bind_material";
+            public const string TECHNIQUE_COMMON = "technique_common";
+
+        }
+
+        static class ATTR {
+            public const string COUNT = "count";
+            public const string DIGITS = "digits";
+            public const string ID = "id";
+            public const string INPUT_SEMANTIC = "input_semantic";
+            public const string INPUT_SET = "input_set";
+            public const string MATERIAL = "material";
+            public const string NAME = "name";
+            public const string OFFSET = "offset";
+            public const string SEMANTIC = "semantic";
+            public const string SOURCE = "source";
+            public const string SID = "sid";
+            public const string STRIDE = "stride";
+            public const string SYMBOL = "symbol";
+            public const string TARGET = "target";
+            public const string TEXCOORD = "texcoord";
+            public const string TEXTURE = "texture";
+            public const string TYPE = "type";
+            public const string URL = "url";
+        }
+
         class Input {
             public string Semantic;
             public string Source;
@@ -15,13 +93,13 @@ namespace ModelConverter {
             public Input(XElement elm) {
                 foreach (var attr in elm.Attributes()) {
                     switch (attr.Name.LocalName) {
-                    case "semantic":
+                    case ATTR.SEMANTIC:
                         Semantic = attr.Value;
                         break;
-                    case "source":
+                    case ATTR.SOURCE:
                         Source = attr.Value;
                         break;
-                    case "offset":
+                    case ATTR.OFFSET:
                         Offset = int.Parse(attr.Value);
                         break;
                     default:
@@ -31,11 +109,11 @@ namespace ModelConverter {
             }
 
             public void Save(XmlWriter xml) {
-                xml.WriteStartElement("input");
-                xml.WriteAttributeString("semantic", "", Semantic);
-                xml.WriteAttributeString("source", "", Source);
+                xml.WriteStartElement(TAG.INPUT);
+                xml.WriteAttributeString(ATTR.SEMANTIC, "", Semantic);
+                xml.WriteAttributeString(ATTR.SOURCE, "", Source);
                 if (0 <= Offset) {
-                    xml.WriteAttributeString("offset", "", Offset.ToString());
+                    xml.WriteAttributeString(ATTR.OFFSET, "", Offset.ToString());
                 }
                 xml.WriteEndElement();
             }
@@ -50,7 +128,7 @@ namespace ModelConverter {
             public Image(XElement elm) {
                 foreach (var attr in elm.Attributes()) {
                     switch (attr.Name.LocalName) {
-                    case "id":
+                    case ATTR.ID:
                         Id = attr.Value;
                         break;
                     default:
@@ -59,7 +137,7 @@ namespace ModelConverter {
                 }
                 foreach (var elm1 in elm.Elements()) {
                     switch (elm1.Name.LocalName) {
-                    case "init_from":
+                    case TAG.INIT_FROM:
                         loadInitFrom(elm1);
                         break;
                     default:
@@ -71,7 +149,7 @@ namespace ModelConverter {
             void loadInitFrom(XElement elm) {
                 foreach (var elm1 in elm.Elements()) {
                     switch (elm1.Name.LocalName) {
-                    case "ref":
+                    case TAG.REF:
                         File = elm1.Value;
                         break;
                     default:
@@ -81,11 +159,11 @@ namespace ModelConverter {
             }
 
             public void Save(XmlWriter xml) {
-                xml.WriteStartElement("image");
-                xml.WriteAttributeString("id", "", Id);
+                xml.WriteStartElement(TAG.IMAGE);
+                xml.WriteAttributeString(ATTR.ID, "", Id);
 
-                xml.WriteStartElement("init_from");
-                xml.WriteStartElement("ref");
+                xml.WriteStartElement(TAG.INIT_FROM);
+                xml.WriteStartElement(TAG.REF);
                 xml.WriteString(File);
                 xml.WriteEndElement();
                 xml.WriteEndElement();
@@ -104,10 +182,10 @@ namespace ModelConverter {
             public Material(XElement elm) {
                 foreach (var attr in elm.Attributes()) {
                     switch (attr.Name.LocalName) {
-                    case "id":
+                    case ATTR.ID:
                         Id = attr.Value;
                         break;
-                    case "name":
+                    case ATTR.NAME:
                         Name = attr.Value;
                         break;
                     default:
@@ -116,7 +194,7 @@ namespace ModelConverter {
                 }
                 foreach (var elm1 in elm.Elements()) {
                     switch (elm1.Name.LocalName) {
-                    case "instance_effect":
+                    case TAG.INSTANCE_EFFECT:
                         loadInstanceEffect(elm1);
                         break;
                     default:
@@ -128,7 +206,7 @@ namespace ModelConverter {
             void loadInstanceEffect(XElement elm) {
                 foreach (var attr in elm.Attributes()) {
                     switch (attr.Name.LocalName) {
-                    case "url":
+                    case ATTR.URL:
                         URL = attr.Value;
                         break;
                     default:
@@ -138,12 +216,12 @@ namespace ModelConverter {
             }
 
             public void Save(XmlWriter xml) {
-                xml.WriteStartElement("material");
-                xml.WriteAttributeString("id", "", Id);
-                xml.WriteAttributeString("name", "", Name);
+                xml.WriteStartElement(TAG.MATERIAL);
+                xml.WriteAttributeString(ATTR.ID, "", Id);
+                xml.WriteAttributeString(ATTR.NAME, "", Name);
 
-                xml.WriteStartElement("instance_effect");
-                xml.WriteAttributeString("url", "", URL);
+                xml.WriteStartElement(TAG.INSTANCE_EFFECT);
+                xml.WriteAttributeString(ATTR.URL, "", URL);
                 xml.WriteEndElement();
 
                 xml.WriteEndElement();
@@ -153,7 +231,7 @@ namespace ModelConverter {
         #region Effect
         class Effect {
             public string Id;
-            public NewParam NewParam;
+            public List<NewParam> NewParams;
             public Technique Technique;
 
             public Effect() { }
@@ -161,7 +239,7 @@ namespace ModelConverter {
             public Effect(XElement elm) {
                 foreach (var attr in elm.Attributes()) {
                     switch (attr.Name.LocalName) {
-                    case "id":
+                    case ATTR.ID:
                         Id = attr.Value;
                         break;
                     default:
@@ -170,7 +248,7 @@ namespace ModelConverter {
                 }
                 foreach (var elm1 in elm.Elements()) {
                     switch (elm1.Name.LocalName) {
-                    case "profile_COMMON":
+                    case TAG.PROFILE_COMMON:
                         loadProfileCommon(elm1);
                         break;
                     default:
@@ -182,10 +260,13 @@ namespace ModelConverter {
             void loadProfileCommon(XElement elm) {
                 foreach (var elm1 in elm.Elements()) {
                     switch (elm1.Name.LocalName) {
-                    case "newparam":
-                        NewParam = new NewParam(elm1);
+                    case TAG.NEW_PARAM:
+                        if (null == NewParams) {
+                            NewParams = new List<NewParam>();
+                        }
+                        NewParams.Add(new NewParam(elm1));
                         break;
-                    case "technique":
+                    case TAG.TECHNIQUE:
                         Technique = new Technique(elm1);
                         break;
                     default:
@@ -195,16 +276,16 @@ namespace ModelConverter {
             }
 
             public void Save(XmlWriter xml) {
-                xml.WriteStartElement("effect");
-                xml.WriteAttributeString("id", "", Id);
+                xml.WriteStartElement(TAG.EFFECT);
+                xml.WriteAttributeString(ATTR.ID, "", Id);
 
-                xml.WriteStartElement("profile_COMMON");
-                if (null != NewParam) {
-                    NewParam.Save(xml);
+                xml.WriteStartElement(TAG.PROFILE_COMMON);
+                if (null != NewParams) {
+                    foreach (var p in NewParams) {
+                        p.Save(xml);
+                    }
                 }
-                if (null != Technique) {
-                    Technique.Save(xml);
-                }
+                Technique.Save(xml);
                 xml.WriteEndElement();
 
                 xml.WriteEndElement();
@@ -220,7 +301,7 @@ namespace ModelConverter {
             public NewParam(XElement elm) {
                 foreach (var attr in elm.Attributes()) {
                     switch (attr.Name.LocalName) {
-                    case "sid":
+                    case ATTR.SID:
                         SId = attr.Value;
                         break;
                     default:
@@ -229,7 +310,7 @@ namespace ModelConverter {
                 }
                 foreach (var elm1 in elm.Elements()) {
                     switch (elm1.Name.LocalName) {
-                    case "sampler2D":
+                    case TAG.SAMPLER2D:
                         loadSampler2D(elm1);
                         break;
                     default:
@@ -241,7 +322,7 @@ namespace ModelConverter {
             void loadSampler2D(XElement elm) {
                 foreach (var elm1 in elm.Elements()) {
                     switch (elm1.Name.LocalName) {
-                    case "instance_image":
+                    case TAG.INSTANCE_IMAGE:
                         loadInstanceImage(elm1);
                         break;
                     default:
@@ -253,7 +334,7 @@ namespace ModelConverter {
             void loadInstanceImage(XElement elm) {
                 foreach (var attr in elm.Attributes()) {
                     switch (attr.Name.LocalName) {
-                    case "url":
+                    case ATTR.URL:
                         URL = attr.Value;
                         break;
                     default:
@@ -263,12 +344,12 @@ namespace ModelConverter {
             }
 
             public void Save(XmlWriter xml) {
-                xml.WriteStartElement("newparam");
-                xml.WriteAttributeString("sid", "", SId);
+                xml.WriteStartElement(TAG.NEW_PARAM);
+                xml.WriteAttributeString(ATTR.SID, "", SId);
 
-                xml.WriteStartElement("sampler2D");
-                xml.WriteStartElement("instance_image");
-                xml.WriteAttributeString("url", "", URL);
+                xml.WriteStartElement(TAG.SAMPLER2D);
+                xml.WriteStartElement(TAG.INSTANCE_IMAGE);
+                xml.WriteAttributeString(ATTR.URL, "", URL);
                 xml.WriteEndElement();
                 xml.WriteEndElement();
 
@@ -279,13 +360,18 @@ namespace ModelConverter {
         class Technique {
             public string SId;
             public Texture DiffuseTexture;
+            public double[] DiffuseColor;
+            public Texture AmbientTexture;
+            public double[] AmbientColor;
+            public Texture SpecularTexture;
+            public double[] SpecularColor;
 
             public Technique() { }
 
             public Technique(XElement elm) {
                 foreach (var attr in elm.Attributes()) {
                     switch (attr.Name.LocalName) {
-                    case "sid":
+                    case ATTR.SID:
                         SId = attr.Value;
                         break;
                     default:
@@ -294,7 +380,7 @@ namespace ModelConverter {
                 }
                 foreach (var elm1 in elm.Elements()) {
                     switch (elm1.Name.LocalName) {
-                    case "blinn":
+                    case TAG.BLINN:
                         loadBlinn(elm1);
                         break;
                     default:
@@ -306,8 +392,14 @@ namespace ModelConverter {
             void loadBlinn(XElement elm) {
                 foreach (var elm1 in elm.Elements()) {
                     switch (elm1.Name.LocalName) {
-                    case "diffuse":
-                        DiffuseTexture = loadTexture(elm1);
+                    case TAG.DIFFUSE:
+                        load(elm1, DiffuseTexture, DiffuseColor);
+                        break;
+                    case TAG.AMBIENT:
+                        load(elm1, AmbientTexture, AmbientColor);
+                        break;
+                    case TAG.SPECULAR:
+                        load(elm1, SpecularTexture, SpecularColor);
                         break;
                     default:
                         break;
@@ -315,30 +407,75 @@ namespace ModelConverter {
                 }
             }
 
-            Texture loadTexture(XElement elm) {
+            void load(XElement elm, Texture texture, double[] color) {
                 foreach (var elm1 in elm.Elements()) {
                     switch (elm1.Name.LocalName) {
-                    case "texture":
-                        return new Texture(elm1);
+                    case TAG.TEXTURE:
+                        texture = new Texture(elm1);
+                        break;
+                    case TAG.COLOR:
+                        color = loadColor(elm1);
+                        break;
                     default:
-                        return null;
+                        break;
                     }
                 }
-                return null;
+            }
+
+            double[] loadColor(XElement elm) {
+                var arr = elm.Value.Split(" ");
+                var color = new double[arr.Length];
+                for (int i = 0; i < arr.Length; i++) {
+                    color[i] = double.Parse(arr[i]);
+                }
+                return color;
             }
 
             public void Save(XmlWriter xml) {
-                xml.WriteStartElement("technique");
-                xml.WriteAttributeString("sid", "", SId);
+                xml.WriteStartElement(TAG.TECHNIQUE);
+                xml.WriteAttributeString(ATTR.SID, "", SId);
+                xml.WriteStartElement(TAG.BLINN);
 
-                if (null != DiffuseTexture) {
-                    xml.WriteStartElement("blinn");
-                    xml.WriteStartElement("diffuse");
-                    DiffuseTexture.Save(xml);
-                    xml.WriteEndElement();
+                if (null != DiffuseTexture || null != DiffuseColor) {
+                    xml.WriteStartElement(TAG.DIFFUSE);
+                    if (null != DiffuseTexture) {
+                        DiffuseTexture.Save(xml);
+                    }
+                    if (null != DiffuseColor) {
+                        xml.WriteStartElement(TAG.COLOR);
+                        xml.WriteString(string.Join(' ', DiffuseColor));
+                        xml.WriteEndElement();
+                    }
                     xml.WriteEndElement();
                 }
 
+                if (null != AmbientTexture || null != AmbientColor) {
+                    xml.WriteStartElement(TAG.AMBIENT);
+                    if (null != AmbientTexture) {
+                        AmbientTexture.Save(xml);
+                    }
+                    if (null != AmbientColor) {
+                        xml.WriteStartElement(TAG.COLOR);
+                        xml.WriteString(string.Join(' ', AmbientColor));
+                        xml.WriteEndElement();
+                    }
+                    xml.WriteEndElement();
+                }
+
+                if (null != SpecularTexture || null != SpecularColor) {
+                    xml.WriteStartElement(TAG.SPECULAR);
+                    if (null != SpecularTexture) {
+                        SpecularTexture.Save(xml);
+                    }
+                    if (null != SpecularColor) {
+                        xml.WriteStartElement(TAG.COLOR);
+                        xml.WriteString(string.Join(' ', SpecularColor));
+                        xml.WriteEndElement();
+                    }
+                    xml.WriteEndElement();
+                }
+
+                xml.WriteEndElement();
                 xml.WriteEndElement();
             }
         }
@@ -352,10 +489,10 @@ namespace ModelConverter {
             public Texture(XElement elm) {
                 foreach (var attr in elm.Attributes()) {
                     switch (attr.Name.LocalName) {
-                    case "texture":
+                    case ATTR.TEXTURE:
                         Id = attr.Value;
                         break;
-                    case "texcoord":
+                    case ATTR.TEXCOORD:
                         TexCoord = attr.Value;
                         break;
                     default:
@@ -365,9 +502,9 @@ namespace ModelConverter {
             }
 
             public void Save(XmlWriter xml) {
-                xml.WriteStartElement("texture");
-                xml.WriteAttributeString("texture", "", Id);
-                xml.WriteAttributeString("texcoord", "", TexCoord);
+                xml.WriteStartElement(TAG.TEXTURE);
+                xml.WriteAttributeString(ATTR.TEXTURE, "", Id);
+                xml.WriteAttributeString(ATTR.TEXCOORD, "", TexCoord);
                 xml.WriteEndElement();
             }
         }
@@ -386,7 +523,7 @@ namespace ModelConverter {
                 Accessor = new Accessor();
                 foreach (var attr in elm.Attributes()) {
                     switch (attr.Name.LocalName) {
-                    case "id":
+                    case ATTR.ID:
                         Id = attr.Value;
                         break;
                     default:
@@ -395,14 +532,14 @@ namespace ModelConverter {
                 }
                 foreach (var elm1 in elm.Elements()) {
                     switch (elm1.Name.LocalName) {
-                    case "float_array":
+                    case TAG.FLOAT_ARRAY:
                         FloatArray = new FloatArray(elm1);
                         break;
-                    case "Name_array":
+                    case TAG.NAME_ARRAY:
                         NameArray = new NameArray(elm1);
                         break;
-                    case "technique_common":
-                        Accessor = new TechniqueCommon(elm1).Accessor;
+                    case TAG.TECHNIQUE_COMMON:
+                        Accessor = loadTechniqueCommon(elm1);
                         break;
                     default:
                         break;
@@ -410,10 +547,21 @@ namespace ModelConverter {
                 }
             }
 
-            public void Save(XmlWriter xml) {
-                xml.WriteStartElement("source");
+            Accessor loadTechniqueCommon(XElement elm) {
+                foreach (var elm1 in elm.Elements()) {
+                    switch (elm1.Name.LocalName) {
+                    case TAG.ACCESSOR:
+                        return new Accessor(elm1);
+                    default:
+                        return null;
+                    }
+                }
+                return null;
+            }
 
-                xml.WriteAttributeString("id", "", Id);
+            public void Save(XmlWriter xml) {
+                xml.WriteStartElement(TAG.SOURCE);
+                xml.WriteAttributeString(ATTR.ID, "", Id);
 
                 if (null != FloatArray) {
                     FloatArray.Save(xml);
@@ -422,7 +570,7 @@ namespace ModelConverter {
                     NameArray.Save(xml);
                 }
                 if (null != Accessor) {
-                    xml.WriteStartElement("technique_common");
+                    xml.WriteStartElement(TAG.TECHNIQUE_COMMON);
                     Accessor.Save(xml);
                     xml.WriteEndElement();
                 }
@@ -442,13 +590,13 @@ namespace ModelConverter {
             public FloatArray(XElement elm) {
                 foreach (var attr in elm.Attributes()) {
                     switch (attr.Name.LocalName) {
-                    case "id":
+                    case ATTR.ID:
                         Id = attr.Value;
                         break;
-                    case "count":
+                    case ATTR.COUNT:
                         Count = int.Parse(attr.Value);
                         break;
-                    case "digits":
+                    case ATTR.DIGITS:
                         Digits = int.Parse(attr.Value);
                         break;
                     default:
@@ -463,14 +611,11 @@ namespace ModelConverter {
             }
 
             public void Save(XmlWriter xml) {
-                xml.WriteStartElement("float_array");
-
-                xml.WriteAttributeString("id", "", Id);
-                xml.WriteAttributeString("count", "", Count.ToString());
-                xml.WriteAttributeString("digits", "", Digits.ToString());
-
+                xml.WriteStartElement(TAG.FLOAT_ARRAY);
+                xml.WriteAttributeString(ATTR.ID, "", Id);
+                xml.WriteAttributeString(ATTR.COUNT, "", Count.ToString());
+                xml.WriteAttributeString(ATTR.DIGITS, "", Digits.ToString());
                 xml.WriteString(string.Join(' ', Value));
-
                 xml.WriteEndElement();
             }
         }
@@ -485,10 +630,10 @@ namespace ModelConverter {
             public NameArray(XElement elm) {
                 foreach (var attr in elm.Attributes()) {
                     switch (attr.Name.LocalName) {
-                    case "id":
+                    case ATTR.ID:
                         Id = attr.Value;
                         break;
-                    case "count":
+                    case ATTR.COUNT:
                         Count = int.Parse(attr.Value);
                         break;
                     default:
@@ -499,13 +644,10 @@ namespace ModelConverter {
             }
 
             public void Save(XmlWriter xml) {
-                xml.WriteStartElement("name_array");
-
-                xml.WriteAttributeString("id", "", Id);
-                xml.WriteAttributeString("count", "", Count.ToString());
-
+                xml.WriteStartElement(TAG.NAME_ARRAY);
+                xml.WriteAttributeString(ATTR.ID, "", Id);
+                xml.WriteAttributeString(ATTR.COUNT, "", Count.ToString());
                 xml.WriteString(string.Join(' ', Value));
-
                 xml.WriteEndElement();
             }
         }
@@ -521,13 +663,13 @@ namespace ModelConverter {
             public Accessor(XElement elm) {
                 foreach (var attr in elm.Attributes()) {
                     switch (attr.Name.LocalName) {
-                    case "source":
+                    case ATTR.SOURCE:
                         Source = attr.Value;
                         break;
-                    case "count":
+                    case ATTR.COUNT:
                         Count = int.Parse(attr.Value);
                         break;
-                    case "stride":
+                    case ATTR.STRIDE:
                         Stride = int.Parse(attr.Value);
                         break;
                     default:
@@ -536,7 +678,7 @@ namespace ModelConverter {
                 }
                 foreach (var elm1 in elm.Elements()) {
                     switch (elm1.Name.LocalName) {
-                    case "param":
+                    case TAG.PARAM:
                         if (null == Params) {
                             Params = new List<Param>();
                         }
@@ -549,12 +691,12 @@ namespace ModelConverter {
             }
 
             public void Save(XmlWriter xml) {
-                xml.WriteStartElement("accessor");
+                xml.WriteStartElement(TAG.ACCESSOR);
 
-                xml.WriteAttributeString("source", "", Source);
-                xml.WriteAttributeString("count", "", Count.ToString());
+                xml.WriteAttributeString(ATTR.SOURCE, "", Source);
+                xml.WriteAttributeString(ATTR.COUNT, "", Count.ToString());
                 if (1 < Stride) {
-                    xml.WriteAttributeString("stride", "", Stride.ToString());
+                    xml.WriteAttributeString(ATTR.STRIDE, "", Stride.ToString());
                 }
 
                 if (null != Params) {
@@ -576,10 +718,10 @@ namespace ModelConverter {
             public Param(XElement elm) {
                 foreach (var attr in elm.Attributes()) {
                     switch (attr.Name.LocalName) {
-                    case "name":
+                    case ATTR.NAME:
                         Name = attr.Value;
                         break;
-                    case "type":
+                    case ATTR.TYPE:
                         Type = attr.Value;
                         break;
                     default:
@@ -589,9 +731,9 @@ namespace ModelConverter {
             }
 
             public void Save(XmlWriter xml) {
-                xml.WriteStartElement("param");
-                xml.WriteAttributeString("name", "", Name);
-                xml.WriteAttributeString("type", "", Type);
+                xml.WriteStartElement(TAG.PARAM);
+                xml.WriteAttributeString(ATTR.NAME, "", Name);
+                xml.WriteAttributeString(ATTR.TYPE, "", Type);
                 xml.WriteEndElement();
             }
         }
@@ -607,7 +749,7 @@ namespace ModelConverter {
             public Geometry(XElement elm) {
                 foreach (var attr in elm.Attributes()) {
                     switch (attr.Name.LocalName) {
-                    case "id":
+                    case ATTR.ID:
                         Id = attr.Value;
                         break;
                     default:
@@ -616,7 +758,7 @@ namespace ModelConverter {
                 }
                 foreach (var elm1 in elm.Elements()) {
                     switch (elm1.Name.LocalName) {
-                    case "mesh":
+                    case TAG.MESH:
                         Mesh = new Mesh(elm1);
                         break;
                     default:
@@ -626,8 +768,8 @@ namespace ModelConverter {
             }
 
             public void Save(XmlWriter xml) {
-                xml.WriteStartElement("geometry");
-                xml.WriteAttributeString("id", "", Id);
+                xml.WriteStartElement(TAG.GEOMETRY);
+                xml.WriteAttributeString(ATTR.ID, "", Id);
                 if (null != Mesh) {
                     Mesh.Save(xml);
                 }
@@ -645,16 +787,16 @@ namespace ModelConverter {
             public Mesh(XElement elm) {
                 foreach (var elm1 in elm.Elements()) {
                     switch (elm1.Name.LocalName) {
-                    case "source":
+                    case TAG.SOURCE:
                         if (null == Sources) {
                             Sources = new List<Source>();
                         }
                         Sources.Add(new Source(elm1));
                         break;
-                    case "vertices":
+                    case TAG.VERTICES:
                         Vertices = new Vertices(elm1);
                         break;
-                    case "polylist":
+                    case TAG.POLYLIST:
                         Polylist = new Polylist(elm1);
                         break;
                     default:
@@ -664,7 +806,7 @@ namespace ModelConverter {
             }
 
             public void Save(XmlWriter xml) {
-                xml.WriteStartElement("mesh");
+                xml.WriteStartElement(TAG.MESH);
                 if (null != Sources) {
                     foreach (var source in Sources) {
                         source.Save(xml);
@@ -689,7 +831,7 @@ namespace ModelConverter {
             public Vertices(XElement elm) {
                 foreach (var attr in elm.Attributes()) {
                     switch (attr.Name.LocalName) {
-                    case "id":
+                    case ATTR.ID:
                         Id = attr.Value;
                         break;
                     default:
@@ -698,7 +840,7 @@ namespace ModelConverter {
                 }
                 foreach (var elm1 in elm.Elements()) {
                     switch (elm1.Name.LocalName) {
-                    case "input":
+                    case TAG.INPUT:
                         Input = new Input(elm1);
                         break;
                     default:
@@ -708,8 +850,8 @@ namespace ModelConverter {
             }
 
             public void Save(XmlWriter xml) {
-                xml.WriteStartElement("vertices");
-                xml.WriteAttributeString("id", "", Id);
+                xml.WriteStartElement(TAG.VERTICES);
+                xml.WriteAttributeString(ATTR.ID, "", Id);
                 if (null != Input) {
                     Input.Save(xml);
                 }
@@ -729,10 +871,10 @@ namespace ModelConverter {
             public Polylist(XElement elm) {
                 foreach (var attr in elm.Attributes()) {
                     switch (attr.Name.LocalName) {
-                    case "material":
+                    case ATTR.MATERIAL:
                         Material = attr.Value;
                         break;
-                    case "count":
+                    case ATTR.COUNT:
                         Count = int.Parse(attr.Value);
                         break;
                     default:
@@ -741,16 +883,16 @@ namespace ModelConverter {
                 }
                 foreach (var elm1 in elm.Elements()) {
                     switch (elm1.Name.LocalName) {
-                    case "input":
+                    case TAG.INPUT:
                         if (null == Inputs) {
                             Inputs = new List<Input>();
                         }
                         Inputs.Add(new Input(elm1));
                         break;
-                    case "vcount":
+                    case TAG.VCOUNT:
                         VCount = loadVCount(elm1);
                         break;
-                    case "p":
+                    case TAG.P:
                         Index = loadP(elm1);
                         break;
                     default:
@@ -778,22 +920,21 @@ namespace ModelConverter {
             }
 
             public void Save(XmlWriter xml) {
-                xml.WriteStartElement("polylist");
-
-                xml.WriteAttributeString("material", "", Material);
-                xml.WriteAttributeString("count", "", Count.ToString());
+                xml.WriteStartElement(TAG.POLYLIST);
+                xml.WriteAttributeString(ATTR.MATERIAL, "", Material);
+                xml.WriteAttributeString(ATTR.COUNT, "", Count.ToString());
 
                 if (null != Inputs) {
-                    foreach(var input in Inputs) {
+                    foreach (var input in Inputs) {
                         input.Save(xml);
                     }
                 }
 
-                xml.WriteStartElement("vcount");
+                xml.WriteStartElement(TAG.VCOUNT);
                 xml.WriteString(string.Join(' ', VCount));
                 xml.WriteEndElement();
 
-                xml.WriteStartElement("p");
+                xml.WriteStartElement(TAG.P);
                 xml.WriteString(string.Join(' ', Index));
                 xml.WriteEndElement();
 
@@ -812,7 +953,7 @@ namespace ModelConverter {
             public Controller(XElement elm) {
                 foreach (var attr in elm.Attributes()) {
                     switch (attr.Name.LocalName) {
-                    case "id":
+                    case ATTR.ID:
                         Id = attr.Value;
                         break;
                     default:
@@ -821,7 +962,7 @@ namespace ModelConverter {
                 }
                 foreach (var elm1 in elm.Elements()) {
                     switch (elm1.Name.LocalName) {
-                    case "skin":
+                    case TAG.SKIN:
                         Skin = new Skin(elm1);
                         break;
                     default:
@@ -831,8 +972,8 @@ namespace ModelConverter {
             }
 
             public void Save(XmlWriter xml) {
-                xml.WriteStartElement("controller");
-                xml.WriteAttributeString("id", "", Id);
+                xml.WriteStartElement(TAG.CONTROLLER);
+                xml.WriteAttributeString(ATTR.ID, "", Id);
                 if (null != Skin) {
                     Skin.Save(xml);
                 }
@@ -852,7 +993,7 @@ namespace ModelConverter {
             public Skin(XElement elm) {
                 foreach (var attr in elm.Attributes()) {
                     switch (attr.Name.LocalName) {
-                    case "source":
+                    case ATTR.SOURCE:
                         Source = attr.Value;
                         break;
                     default:
@@ -861,19 +1002,19 @@ namespace ModelConverter {
                 }
                 foreach (var elm1 in elm.Elements()) {
                     switch (elm1.Name.LocalName) {
-                    case "source":
+                    case TAG.SOURCE:
                         if (null == Sources) {
                             Sources = new List<Source>();
                         }
                         Sources.Add(new Source(elm1));
                         break;
-                    case "bind_shape_matrix":
+                    case TAG.BIND_SHAPE_MATRIX:
                         BindShapeMatrix = new BindShapeMatrix(elm1);
                         break;
-                    case "joints":
+                    case TAG.JOINTS:
                         Joints = new Joints(elm1);
                         break;
-                    case "vertex_weights":
+                    case TAG.VERTEX_WEIGHTS:
                         VertexWeights = new VertexWeights(elm1);
                         break;
                     default:
@@ -883,9 +1024,8 @@ namespace ModelConverter {
             }
 
             public void Save(XmlWriter xml) {
-                xml.WriteStartElement("skin");
-
-                xml.WriteAttributeString("source", "", Source);
+                xml.WriteStartElement(TAG.SKIN);
+                xml.WriteAttributeString(ATTR.SOURCE, "", Source);
 
                 if (null != Sources) {
                     foreach (var source in Sources) {
@@ -927,7 +1067,7 @@ namespace ModelConverter {
             }
 
             public void Save(XmlWriter xml) {
-                xml.WriteStartElement("bind_shape_matrix");
+                xml.WriteStartElement(TAG.BIND_SHAPE_MATRIX);
                 var str = "";
                 for (int i = 0; i < 16; i++) {
                     str = string.Join(' ', str, Value[i / 4, i % 4]);
@@ -945,7 +1085,7 @@ namespace ModelConverter {
             public Joints(XElement elm) {
                 foreach (var elm1 in elm.Elements()) {
                     switch (elm1.Name.LocalName) {
-                    case "input":
+                    case TAG.INPUT:
                         if (null == Inputs) {
                             Inputs = new List<Input>();
                         }
@@ -958,7 +1098,7 @@ namespace ModelConverter {
             }
 
             public void Save(XmlWriter xml) {
-                xml.WriteStartElement("joints");
+                xml.WriteStartElement(TAG.JOINTS);
                 if (null != Inputs) {
                     foreach (var input in Inputs) {
                         input.Save(xml);
@@ -979,7 +1119,7 @@ namespace ModelConverter {
             public VertexWeights(XElement elm) {
                 foreach (var attr in elm.Attributes()) {
                     switch (attr.Name.LocalName) {
-                    case "count":
+                    case ATTR.COUNT:
                         Count = int.Parse(attr.Value);
                         break;
                     default:
@@ -988,16 +1128,16 @@ namespace ModelConverter {
                 }
                 foreach (var elm1 in elm.Elements()) {
                     switch (elm1.Name.LocalName) {
-                    case "input":
+                    case TAG.INPUT:
                         if (null == Inputs) {
                             Inputs = new List<Input>();
                         }
                         Inputs.Add(new Input(elm1));
                         break;
-                    case "vcount":
+                    case TAG.VCOUNT:
                         VCount = loadVCount(elm1);
                         break;
-                    case "v":
+                    case TAG.V:
                         Index = loadV(elm1);
                         break;
                     default:
@@ -1025,9 +1165,8 @@ namespace ModelConverter {
             }
 
             public void Save(XmlWriter xml) {
-                xml.WriteStartElement("vertex_weights");
-
-                xml.WriteAttributeString("count", "", Count.ToString());
+                xml.WriteStartElement(TAG.VERTEX_WEIGHTS);
+                xml.WriteAttributeString(ATTR.COUNT, "", Count.ToString());
 
                 if (null != Inputs) {
                     foreach (var input in Inputs) {
@@ -1035,11 +1174,11 @@ namespace ModelConverter {
                     }
                 }
 
-                xml.WriteStartElement("vcount");
+                xml.WriteStartElement(TAG.VCOUNT);
                 xml.WriteString(string.Join(' ', VCount));
                 xml.WriteEndElement();
 
-                xml.WriteStartElement("v");
+                xml.WriteStartElement(TAG.V);
                 xml.WriteString(string.Join(' ', Index));
                 xml.WriteEndElement();
 
@@ -1060,7 +1199,7 @@ namespace ModelConverter {
             public VisualScene(XElement elm) {
                 foreach (var attr in elm.Attributes()) {
                     switch (attr.Name.LocalName) {
-                    case "id":
+                    case ATTR.ID:
                         Id = attr.Value;
                         break;
                     default:
@@ -1069,7 +1208,7 @@ namespace ModelConverter {
                 }
                 foreach (var elm2 in elm.Elements()) {
                     switch (elm2.Name.LocalName) {
-                    case "node":
+                    case TAG.NODE:
                         if (null == Nodes) {
                             Nodes = new List<Node>();
                         }
@@ -1082,8 +1221,8 @@ namespace ModelConverter {
             }
 
             public void Save(XmlWriter xml) {
-                xml.WriteStartElement("visual_scene");
-                xml.WriteAttributeString("id", "", Id);
+                xml.WriteStartElement(TAG.VISUAL_SCENE);
+                xml.WriteAttributeString(ATTR.ID, "", Id);
                 if (null != Nodes) {
                     foreach (var node in Nodes) {
                         node.Save(xml);
@@ -1121,16 +1260,16 @@ namespace ModelConverter {
             public Node(XElement elm) {
                 foreach (var attr in elm.Attributes()) {
                     switch (attr.Name.LocalName) {
-                    case "id":
+                    case ATTR.ID:
                         Id = attr.Value;
                         break;
-                    case "name":
+                    case ATTR.NAME:
                         Name = attr.Value;
                         break;
-                    case "sid":
+                    case ATTR.SID:
                         SId = attr.Value;
                         break;
-                    case "type":
+                    case ATTR.TYPE:
                         Type = attr.Value;
                         break;
                     default:
@@ -1139,28 +1278,28 @@ namespace ModelConverter {
                 }
                 foreach (var elm1 in elm.Elements()) {
                     switch (elm1.Name.LocalName) {
-                    case "node":
+                    case TAG.NODE:
                         if (null == Nodes) {
                             Nodes = new List<Node>();
                         }
                         Nodes.Add(new Node(elm1));
                         break;
-                    case "translate":
+                    case TAG.TRANSLATE:
                         Translate = new Translate(elm1);
                         break;
-                    case "scale":
+                    case TAG.SCALE:
                         Scale = new Scale(elm1);
                         break;
-                    case "rotate":
+                    case TAG.ROTATE:
                         if (null == Rotate) {
                             Rotate = new List<Rotate>();
                         }
                         Rotate.Add(new Rotate(elm1));
                         break;
-                    case "instance_geometry":
+                    case TAG.INSTANCE_GEOMETRY:
                         InstanceGeometry = new InstanceGeometry(elm1);
                         break;
-                    case "instance_controller":
+                    case TAG.INSTANCE_CONTROLLER:
                         InstanceController = new InstanceController(elm1);
                         break;
                     default:
@@ -1170,15 +1309,14 @@ namespace ModelConverter {
             }
 
             public void Save(XmlWriter xml) {
-                xml.WriteStartElement("node");
-
-                xml.WriteAttributeString("id", "", Id);
-                xml.WriteAttributeString("name", "", Name);
+                xml.WriteStartElement(TAG.NODE);
+                xml.WriteAttributeString(ATTR.ID, "", Id);
+                xml.WriteAttributeString(ATTR.NAME, "", Name);
                 if (!string.IsNullOrEmpty(Type)) {
-                    xml.WriteAttributeString("type", "", Type);
+                    xml.WriteAttributeString(ATTR.TYPE, "", Type);
                 }
                 if (!string.IsNullOrEmpty(SId)) {
-                    xml.WriteAttributeString("sid", "", SId);
+                    xml.WriteAttributeString(ATTR.SID, "", SId);
                 }
 
                 if (null != Translate) {
@@ -1224,7 +1362,7 @@ namespace ModelConverter {
             public Translate(XElement elm) {
                 foreach (var attr in elm.Attributes()) {
                     switch (attr.Name.LocalName) {
-                    case "sid":
+                    case ATTR.SID:
                         SId = attr.Value;
                         break;
                     default:
@@ -1238,8 +1376,8 @@ namespace ModelConverter {
             }
 
             public void Save(XmlWriter xml) {
-                xml.WriteStartElement("translate");
-                xml.WriteAttributeString("sid", "", SId);
+                xml.WriteStartElement(TAG.TRANSLATE);
+                xml.WriteAttributeString(ATTR.SID, "", SId);
                 xml.WriteString(string.Join(' ', X, Y, Z));
                 xml.WriteEndElement();
             }
@@ -1261,7 +1399,7 @@ namespace ModelConverter {
             public Scale(XElement elm) {
                 foreach (var attr in elm.Attributes()) {
                     switch (attr.Name.LocalName) {
-                    case "sid":
+                    case ATTR.SID:
                         SId = attr.Value;
                         break;
                     default:
@@ -1275,8 +1413,8 @@ namespace ModelConverter {
             }
 
             public void Save(XmlWriter xml) {
-                xml.WriteStartElement("scale");
-                xml.WriteAttributeString("sid", "", SId);
+                xml.WriteStartElement(TAG.SCALE);
+                xml.WriteAttributeString(ATTR.SID, "", SId);
                 xml.WriteString(string.Join(' ', X, Y, Z));
                 xml.WriteEndElement();
             }
@@ -1300,7 +1438,7 @@ namespace ModelConverter {
             public Rotate(XElement elm) {
                 foreach (var attr in elm.Attributes()) {
                     switch (attr.Name.LocalName) {
-                    case "sid":
+                    case ATTR.SID:
                         SId = attr.Value;
                         break;
                     default:
@@ -1315,8 +1453,8 @@ namespace ModelConverter {
             }
 
             public void Save(XmlWriter xml) {
-                xml.WriteStartElement("rotate");
-                xml.WriteAttributeString("sid", "", SId);
+                xml.WriteStartElement(TAG.ROTATE);
+                xml.WriteAttributeString(ATTR.SID, "", SId);
                 xml.WriteString(string.Join(' ', X, Y, Z, Angle));
                 xml.WriteEndElement();
             }
@@ -1331,7 +1469,7 @@ namespace ModelConverter {
             public InstanceGeometry(XElement elm) {
                 foreach (var attr in elm.Attributes()) {
                     switch (attr.Name.LocalName) {
-                    case "url":
+                    case ATTR.URL:
                         URL = attr.Value;
                         break;
                     default:
@@ -1340,7 +1478,7 @@ namespace ModelConverter {
                 }
                 foreach (var elm1 in elm.Elements()) {
                     switch (elm1.Name.LocalName) {
-                    case "bind_material":
+                    case TAG.BIND_MATERIAL:
                         loadBindMaterial(elm1);
                         break;
                     default:
@@ -1352,19 +1490,33 @@ namespace ModelConverter {
             void loadBindMaterial(XElement elm) {
                 foreach (var elm1 in elm.Elements()) {
                     switch (elm1.Name.LocalName) {
-                    case "technique_common":
-                        InstanceMaterial = new TechniqueCommon(elm1).InstanceMaterial;
+                    case TAG.TECHNIQUE_COMMON:
+                        loadTechniqueCommon(elm1);
+                        break;
+                    default:
+                        break;
+                    }
+                }
+            }
+
+            void loadTechniqueCommon(XElement elm) {
+                foreach (var elm1 in elm.Elements()) {
+                    switch (elm1.Name.LocalName) {
+                    case TAG.INSTANCE_MATERIAL:
+                        InstanceMaterial = new InstanceMaterial(elm1);
+                        break;
+                    default:
                         break;
                     }
                 }
             }
 
             public void Save(XmlWriter xml) {
-                xml.WriteStartElement("instance_geometry");
-                xml.WriteAttributeString("url", "", URL);
+                xml.WriteStartElement(TAG.INSTANCE_GEOMETRY);
+                xml.WriteAttributeString(ATTR.URL, "", URL);
                 if (null != InstanceMaterial) {
-                    xml.WriteStartElement("bind_material");
-                    xml.WriteStartElement("technique_common");
+                    xml.WriteStartElement(TAG.BIND_MATERIAL);
+                    xml.WriteStartElement(TAG.TECHNIQUE_COMMON);
                     InstanceMaterial.Save(xml);
                     xml.WriteEndElement();
                     xml.WriteEndElement();
@@ -1382,7 +1534,7 @@ namespace ModelConverter {
             public InstanceController(XElement elm) {
                 foreach (var attr in elm.Attributes()) {
                     switch (attr.Name.LocalName) {
-                    case "url":
+                    case ATTR.URL:
                         URL = attr.Value;
                         break;
                     default:
@@ -1391,7 +1543,7 @@ namespace ModelConverter {
                 }
                 foreach (var elm1 in elm.Elements()) {
                     switch (elm1.Name.LocalName) {
-                    case "bind_material":
+                    case TAG.BIND_MATERIAL:
                         loadBindMaterial(elm1);
                         break;
                     default:
@@ -1403,19 +1555,33 @@ namespace ModelConverter {
             void loadBindMaterial(XElement elm) {
                 foreach (var elm1 in elm.Elements()) {
                     switch (elm1.Name.LocalName) {
-                    case "technique_common":
-                        InstanceMaterial = new TechniqueCommon(elm1).InstanceMaterial;
+                    case TAG.TECHNIQUE_COMMON:
+                        loadTechniqueCommon(elm1);
+                        break;
+                    default:
+                        break;
+                    }
+                }
+            }
+
+            void loadTechniqueCommon(XElement elm) {
+                foreach (var elm1 in elm.Elements()) {
+                    switch (elm1.Name.LocalName) {
+                    case TAG.INSTANCE_MATERIAL:
+                        InstanceMaterial = new InstanceMaterial(elm1);
+                        break;
+                    default:
                         break;
                     }
                 }
             }
 
             public void Save(XmlWriter xml) {
-                xml.WriteStartElement("instance_controller");
-                xml.WriteAttributeString("url", "", URL);
+                xml.WriteStartElement(TAG.INSTANCE_CONTROLLER);
+                xml.WriteAttributeString(ATTR.URL, "", URL);
                 if (null != InstanceMaterial) {
-                    xml.WriteStartElement("bind_material");
-                    xml.WriteStartElement("technique_common");
+                    xml.WriteStartElement(TAG.BIND_MATERIAL);
+                    xml.WriteStartElement(TAG.TECHNIQUE_COMMON);
                     InstanceMaterial.Save(xml);
                     xml.WriteEndElement();
                     xml.WriteEndElement();
@@ -1434,10 +1600,10 @@ namespace ModelConverter {
             public InstanceMaterial(XElement elm) {
                 foreach (var attr in elm.Attributes()) {
                     switch (attr.Name.LocalName) {
-                    case "symbol":
+                    case ATTR.SYMBOL:
                         Symbol = attr.Value;
                         break;
-                    case "target":
+                    case ATTR.TARGET:
                         Target = attr.Value;
                         break;
                     default:
@@ -1446,7 +1612,7 @@ namespace ModelConverter {
                 }
                 foreach (var elm1 in elm.Elements()) {
                     switch (elm1.Name.LocalName) {
-                    case "bind_vertex_input":
+                    case TAG.BIND_VERTEX_INPUT:
                         BindVertexInput = new BindVertexInput(elm1);
                         break;
                     default:
@@ -1456,9 +1622,9 @@ namespace ModelConverter {
             }
 
             public void Save(XmlWriter xml) {
-                xml.WriteStartElement("instance_material");
-                xml.WriteAttributeString("symbol", "", Symbol);
-                xml.WriteAttributeString("target", "", Target);
+                xml.WriteStartElement(TAG.INSTANCE_MATERIAL);
+                xml.WriteAttributeString(ATTR.SYMBOL, "", Symbol);
+                xml.WriteAttributeString(ATTR.TARGET, "", Target);
                 if (null != BindVertexInput) {
                     BindVertexInput.Save(xml);
                 }
@@ -1476,13 +1642,13 @@ namespace ModelConverter {
             public BindVertexInput(XElement elm) {
                 foreach (var attr in elm.Attributes()) {
                     switch (attr.Name.LocalName) {
-                    case "semantic":
+                    case ATTR.SEMANTIC:
                         Semantic = attr.Value;
                         break;
-                    case "input_semantic":
+                    case ATTR.INPUT_SEMANTIC:
                         InputSemantic = attr.Value;
                         break;
-                    case "input_set":
+                    case ATTR.INPUT_SET:
                         InputSet = attr.Value;
                         break;
                     default:
@@ -1492,35 +1658,32 @@ namespace ModelConverter {
             }
 
             public void Save(XmlWriter xml) {
-                xml.WriteStartElement("bind_vertex_input");
-                xml.WriteAttributeString("semantic", "", Semantic);
-                xml.WriteAttributeString("input_semantic", "", InputSemantic);
-                xml.WriteAttributeString("input_set", "", InputSet);
+                xml.WriteStartElement(TAG.BIND_VERTEX_INPUT);
+                xml.WriteAttributeString(ATTR.SEMANTIC, "", Semantic);
+                xml.WriteAttributeString(ATTR.INPUT_SEMANTIC, "", InputSemantic);
+                xml.WriteAttributeString(ATTR.INPUT_SET, "", InputSet);
                 xml.WriteEndElement();
             }
         }
         #endregion
 
-        class TechniqueCommon {
-            public Accessor Accessor;
-            public InstanceMaterial InstanceMaterial;
+        public struct MATERIAL {
+            public string Name;
+            public string DiffuseTexture;
+            public double[] DiffuseColor;
+            public string AmbientTexture;
+            public double[] AmbientColor;
+            public string SpecularTexture;
+            public double[] SpecularColor;
+        }
 
-            public TechniqueCommon() { }
-
-            public TechniqueCommon(XElement elm) {
-                foreach (var elm1 in elm.Elements()) {
-                    switch (elm1.Name.LocalName) {
-                    case "accessor":
-                        Accessor = new Accessor(elm1);
-                        break;
-                    case "instance_material":
-                        InstanceMaterial = new InstanceMaterial(elm1);
-                        break;
-                    default:
-                        break;
-                    }
-                }
-            }
+        public struct OBJECT {
+            public string Name;
+            public string Material;
+            public List<vec3> Vert;
+            public List<vec3> Norm;
+            public List<double[]> UV;
+            public List<int[]> Face;
         }
 
         List<Image> Images = new List<Image>();
@@ -1529,6 +1692,8 @@ namespace ModelConverter {
         List<Geometry> Geometries = new List<Geometry>();
         List<Controller> Controllers = new List<Controller>();
         List<VisualScene> VisualScenes = new List<VisualScene>();
+
+        int unique_id = 1;
 
         public Collada() { }
 
@@ -1541,7 +1706,7 @@ namespace ModelConverter {
                 switch (elm.Name.LocalName) {
                 case "library_images":
                     foreach (var elm1 in elm.Elements()) {
-                        if ("image" != elm1.Name.LocalName) {
+                        if (TAG.IMAGE != elm1.Name.LocalName) {
                             continue;
                         }
                         Images.Add(new Image(elm1));
@@ -1549,7 +1714,7 @@ namespace ModelConverter {
                     break;
                 case "library_effects":
                     foreach (var elm1 in elm.Elements()) {
-                        if ("effect" != elm1.Name.LocalName) {
+                        if (TAG.EFFECT != elm1.Name.LocalName) {
                             continue;
                         }
                         Effects.Add(new Effect(elm1));
@@ -1557,7 +1722,7 @@ namespace ModelConverter {
                     break;
                 case "library_materials":
                     foreach (var elm1 in elm.Elements()) {
-                        if ("material" != elm1.Name.LocalName) {
+                        if (TAG.MATERIAL != elm1.Name.LocalName) {
                             continue;
                         }
                         Materials.Add(new Material(elm1));
@@ -1565,7 +1730,7 @@ namespace ModelConverter {
                     break;
                 case "library_geometries":
                     foreach (var elm1 in elm.Elements()) {
-                        if ("geometry" != elm1.Name.LocalName) {
+                        if (TAG.GEOMETRY != elm1.Name.LocalName) {
                             continue;
                         }
                         Geometries.Add(new Geometry(elm1));
@@ -1573,7 +1738,7 @@ namespace ModelConverter {
                     break;
                 case "library_controllers":
                     foreach (var elm1 in elm.Elements()) {
-                        if ("controller" != elm1.Name.LocalName) {
+                        if (TAG.CONTROLLER != elm1.Name.LocalName) {
                             continue;
                         }
                         Controllers.Add(new Controller(elm1));
@@ -1581,7 +1746,7 @@ namespace ModelConverter {
                     break;
                 case "library_visual_scenes":
                     foreach (var elm1 in elm.Elements()) {
-                        if ("visual_scene" != elm1.Name.LocalName) {
+                        if (TAG.VISUAL_SCENE != elm1.Name.LocalName) {
                             continue;
                         }
                         VisualScenes.Add(new VisualScene(elm1));
@@ -1660,6 +1825,78 @@ namespace ModelConverter {
 
             xml.WriteEndElement();
             xml.Close();
+        }
+
+        public void AddMaterial(MATERIAL material) {
+            var mat = new Material();
+            mat.Id = string.Format("ID{0}", unique_id++);
+            mat.Name = material.Name;
+
+            var eff = new Effect();
+            eff.Id = string.Format("ID{0}", unique_id++);
+            eff.NewParams = new List<NewParam>();
+            eff.Technique = new Technique();
+            eff.Technique.SId = "COMMON";
+            eff.Technique.DiffuseColor = material.DiffuseColor;
+            eff.Technique.AmbientColor = material.AmbientColor;
+            eff.Technique.SpecularColor = material.SpecularColor;
+
+            if (!string.IsNullOrEmpty(material.DiffuseTexture)) {
+                var img = AddImage(material.DiffuseTexture);
+                var para = new NewParam();
+                para.SId = string.Format("ID{0}", unique_id++);
+                para.URL = "#" + img.Id;
+                eff.NewParams.Add(para);
+                eff.Technique.DiffuseTexture = new Texture();
+                eff.Technique.DiffuseTexture.Id = para.SId;
+                eff.Technique.DiffuseTexture.TexCoord = "UVSET0";
+            }
+            if (!string.IsNullOrEmpty(material.AmbientTexture)) {
+                var img = AddImage(material.AmbientTexture);
+                var para = new NewParam();
+                para.SId = string.Format("ID{0}", unique_id++);
+                para.URL = "#" + img.Id;
+                eff.NewParams.Add(para);
+                eff.Technique.AmbientTexture = new Texture();
+                eff.Technique.AmbientTexture.Id = para.SId;
+                eff.Technique.AmbientTexture.TexCoord = "UVSET0";
+            }
+            if (!string.IsNullOrEmpty(material.SpecularTexture)) {
+                var img = AddImage(material.SpecularTexture);
+                var para = new NewParam();
+                para.SId = string.Format("ID{0}", unique_id++);
+                para.URL = "#" + img.Id;
+                eff.NewParams.Add(para);
+                eff.Technique.SpecularTexture = new Texture();
+                eff.Technique.SpecularTexture.Id = para.SId;
+                eff.Technique.SpecularTexture.TexCoord = "UVSET0";
+            }
+
+            Effects.Add(eff);
+
+            mat.URL = "#" + eff.Id;
+            Materials.Add(mat);
+        }
+
+        public void AddObject(OBJECT obj) {
+
+        }
+
+        Image AddImage(string path) {
+            Image image = null;
+            foreach (var img in Images) {
+                if (img.File == path) {
+                    image = img;
+                    break;
+                }
+            }
+            if (null == image) {
+                image = new Image();
+                image.File = path;
+                image.Id = string.Format("ID{0}", unique_id++);
+                Images.Add(image);
+            }
+            return image;
         }
     }
 }
