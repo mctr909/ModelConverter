@@ -162,8 +162,47 @@ class WavefrontObj : BaseModel {
     public WavefrontObj() { }
 
     public WavefrontObj(string path) {
+        int vertexIdx, uvIdx;
         var curMaterial = "";
         var curObject = new Object();
+        var curSurface = new Surface();
+
+        using (var fs = new StreamReader(path)) {
+            int row = 0;
+            while (!fs.EndOfStream) {
+                var line = fs.ReadLine().Replace("\t", "").Replace("  ", " ").Trim();
+                var cols = line.Split(" ");
+                row++;
+                if (cols.Length < 1 || string.IsNullOrEmpty(cols[0])) {
+                    continue;
+                }
+                if (0 == cols[0].TrimStart().IndexOf("#")) {
+                    continue;
+                }
+                switch (cols[0].ToLower()) {
+                case "v":
+                    if (cols.Length != 4) {
+                        Console.WriteLine("頂点エラー：値の個数が3未満 {0}行目\n\"{1}\"", row, line);
+                    } else {
+                        var v = new vec3(float.Parse(cols[1]), float.Parse(cols[2]), float.Parse(cols[3]));
+                        mVertList.Add(v);
+                    }
+                    break;
+                case "vt":
+                    if (cols.Length < 3) {
+                        Console.WriteLine("UVエラー：値の個数が2未満 {0}行目\n\"{1}\"", row, line);
+                    } else {
+                        var uv = new float[] { float.Parse(cols[1]), float.Parse(cols[2]) };
+                        mUvList.Add(uv);
+                    }
+                    break;
+                case "vn":
+                    break;
+                case "vp":
+                    break;
+                }
+            }
+        }
 
         using (var fs = new StreamReader(path)) {
             int row = 0;
@@ -187,27 +226,6 @@ class WavefrontObj : BaseModel {
                     break;
                 case "s":
                     break;
-                case "v":
-                    if (cols.Length != 4) {
-                        Console.WriteLine("頂点の値の個数が3でない Line:{0}\n\"{1}\"", row, line);
-                    } else {
-                        var v = new vec3(float.Parse(cols[1]), float.Parse(cols[2]), float.Parse(cols[3]));
-                        mVertList.Add(v);
-                    }
-                    break;
-                case "vt":
-                    if (cols.Length < 3) {
-                        Console.WriteLine("UVの値の個数が2未満 Line:{0}\n\"{1}\"", row, line);
-                    } else {
-                        var uv = new float[] { float.Parse(cols[1]), float.Parse(cols[2]) };
-                        mUvList.Add(uv);
-                    }
-                    break;
-                case "vn":
-                    break;
-                case "vp":
-                    break;
-
                 case "g":
                     if (0 < curObject.Surfaces.Count) {
                         mObjectList.Add(curObject);
@@ -217,75 +235,62 @@ class WavefrontObj : BaseModel {
                         curObject.Name = line.Substring(2).Replace("\"", "");
                     }
                     break;
-                case "l": {
-                    var s = new Surface();
-                    s.MaterialName = curMaterial;
-                    for (int i = 1; i < cols.Length; i++) {
-                        s.Line.Add(int.Parse(cols[i]) - 1);
+                case "l":
+                    curSurface = new Surface();
+                    curSurface.MaterialName = curMaterial;
+                    for (int icol = 1; icol < cols.Length; icol++) {
+                        if (!int.TryParse(cols[icol], out vertexIdx) || vertexIdx < 1) {
+                            Console.WriteLine("インデックスエラー：{0}行目 点:\"{1}\"", row, cols[icol]);
+                        } else {
+                            curSurface.Line.Add(vertexIdx - 1);
+                        }
                     }
-                    curObject.Surfaces.Add(s);
-                }
+                    curObject.Surfaces.Add(curSurface);
                     break;
-                case "f": {
+                case "f":
                     if (cols.Length < 4) {
                         return;
                     }
-                    var s = new Surface();
-                    s.MaterialName = curMaterial;
-                    int vertexIdx, uvIdx;
-                    for (int i = 1; i < cols.Length; i++) {
-                        var fcols = cols[i].Split("/");
+                    curSurface = new Surface();
+                    curSurface.MaterialName = curMaterial;
+                    for (int icol = 1; icol < cols.Length; icol++) {
+                        var fcols = cols[icol].Split("/");
                         switch (fcols.Length) {
                         case 1:
-                            if (!int.TryParse(fcols[0], out vertexIdx)) {
-                                Console.WriteLine("頂点インデックスエラー velue\"{0}\"\n\"{1}\"", fcols[0], line);
-                                Console.ReadKey();
-                                return;
+                            if (!int.TryParse(fcols[0], out vertexIdx) || vertexIdx < 1) {
+                                Console.WriteLine("インデックスエラー：{0}行目 頂点:\"{1}\"", row, fcols[0]);
+                            } else {
+                                curSurface.Indices.Add(new Index(vertexIdx - 1));
                             }
-                            s.Indices.Add(new Index(vertexIdx - 1));
                             break;
                         case 2:
-                            if (!int.TryParse(fcols[0], out vertexIdx)) {
-                                Console.WriteLine("頂点インデックスエラー velue\"{0}\"\n\"{1}\"", fcols[0], line);
-                                Console.ReadKey();
-                                return;
+                            if (!int.TryParse(fcols[0], out vertexIdx) || vertexIdx < 1 ||
+                                !int.TryParse(fcols[1], out uvIdx) || uvIdx < 1) {
+                                Console.WriteLine("インデックスエラー：{0}行目 頂点:\"{1}\" UV:\"{2}\"", row, fcols[0], fcols[1]);
+                            } else {
+                                curSurface.Indices.Add(new Index(vertexIdx - 1, uvIdx - 1));
                             }
-                            if (!int.TryParse(fcols[1], out uvIdx)) {
-                                Console.WriteLine("UVインデックスエラー velue\"{0}\"\n\"{1}\"", fcols[1], line);
-                                Console.ReadKey();
-                                return;
-                            }
-                            s.Indices.Add(new Index(vertexIdx - 1, uvIdx - 1));
                             break;
                         case 3:
                             if ("" == fcols[1]) {
-                                if (!int.TryParse(fcols[0], out vertexIdx)) {
-                                    Console.WriteLine("頂点インデックスエラー velue\"{0}\"\n\"{1}\"", fcols[0], line);
-                                    Console.ReadKey();
-                                    return;
+                                if (!int.TryParse(fcols[0], out vertexIdx) || vertexIdx < 1) {
+                                    Console.WriteLine("インデックスエラー：{0}行目 頂点:\"{1}\"", row, fcols[0]);
+                                } else {
+                                    curSurface.Indices.Add(new Index(vertexIdx - 1));
                                 }
-                                s.Indices.Add(new Index(vertexIdx - 1));
                             } else {
-                                if (!int.TryParse(fcols[0], out vertexIdx)) {
-                                    Console.WriteLine("頂点インデックスエラー velue\"{0}\"\n\"{1}\"", fcols[0], line);
-                                    Console.ReadKey();
-                                    return;
+                                if (!int.TryParse(fcols[0], out vertexIdx) || vertexIdx < 1 ||
+                                    !int.TryParse(fcols[1], out uvIdx) || uvIdx < 1) {
+                                    Console.WriteLine("インデックスエラー：{0}行目 頂点:\"{1}\" UV:\"{2}\"", row, fcols[0], fcols[1]);
+                                } else {
+                                    curSurface.Indices.Add(new Index(vertexIdx - 1, uvIdx - 1));
                                 }
-                                if (!int.TryParse(fcols[1], out uvIdx)) {
-                                    Console.WriteLine("UVインデックスエラー velue\"{0}\"\n\"{1}\"", fcols[1], line);
-                                    Console.ReadKey();
-                                    return;
-                                }
-                                s.Indices.Add(new Index(vertexIdx - 1, uvIdx - 1));
                             }
                             break;
                         }
                     }
-                    curObject.Surfaces.Add(s);
-                }
+                    curObject.Surfaces.Add(curSurface);
                     break;
-                default:
-                    return;
                 }
             }
             if (0 < curObject.Surfaces.Count) {
