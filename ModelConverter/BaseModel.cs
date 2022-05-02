@@ -21,7 +21,8 @@ abstract class BaseModel {
     public enum EInvertUV {
         None = 0,
         U = 1,
-        V = 2
+        V = 2,
+        UV = 3
     }
 
     protected struct Index {
@@ -68,9 +69,6 @@ abstract class BaseModel {
     public int SignY { get { return 0 < (InvertAxiz & EInvertAxiz.Y) ? -1 : 1; } }
     public int SignZ { get { return 0 < (InvertAxiz & EInvertAxiz.Z) ? -1 : 1; } }
 
-    public bool InvertU { get { return 0 < (InvertUV & EInvertUV.U); } }
-    public bool InvertV { get { return 0 < (InvertUV & EInvertUV.V); } }
-
     public abstract void Save(string path);
 
     public void Load(BaseModel srcModel) {
@@ -112,6 +110,37 @@ abstract class BaseModel {
             case ESwapAxiz.ZYX:
                 mVertList[vi] = new vec3(v.z, v.y, v.x);
                 break;
+            }
+        }
+    }
+
+    public void TransformUV() {
+        switch (InvertUV) {
+        case EInvertUV.None:
+            break;
+        case EInvertUV.U:
+            for (int ui = 0; ui < mUvList.Count; ui++) {
+                var uv = new float[] { 1.0f - mUvList[ui][0], mUvList[ui][1] };
+                mUvList[ui] = uv;
+            }
+            break;
+        case EInvertUV.V:
+            for (int ui = 0; ui < mUvList.Count; ui++) {
+                var uv = new float[] { mUvList[ui][0], 1.0f - mUvList[ui][1] };
+                mUvList[ui] = uv;
+            }
+            break;
+        case EInvertUV.UV:
+            for (int ui = 0; ui < mUvList.Count; ui++) {
+                var uv = new float[] { 1.0f - mUvList[ui][0], 1.0f - mUvList[ui][1] };
+                mUvList[ui] = uv;
+            }
+            break;
+        }
+        if (SwapUV) {
+            for (int ui = 0; ui < mUvList.Count; ui++) {
+                var uv = new float[] { mUvList[ui][1], mUvList[ui][0] };
+                mUvList[ui] = uv;
             }
         }
     }

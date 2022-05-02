@@ -315,7 +315,6 @@ class WavefrontObj : BaseModel {
         saveMaterial(mtlPath);
         var fs = new StreamWriter(path);
         fs.WriteLine("mtllib {0}", mtlName);
-
         // Vertex
         var signx = SignX;
         var signy = SignY;
@@ -323,32 +322,10 @@ class WavefrontObj : BaseModel {
         foreach (var v in mVertList) {
             fs.WriteLine("v {0} {1} {2}", v.x * signx, v.y * signy, v.z * signz);
         }
-
         // UV
-        string uvformat;
-        if (SwapUV) {
-            uvformat = "vt {1} {0}";
-        } else {
-            uvformat = "vt {0} {1}";
+        foreach (var uv in mUvList) {
+            fs.WriteLine("vt {0} {1}", uv[0], uv[1]);
         }
-        if (InvertU && InvertV) {
-            foreach (var uv in mUvList) {
-                fs.WriteLine(uvformat, 1.0 - uv[0], 1.0 - uv[1]);
-            }
-        } else if (InvertU) {
-            foreach (var uv in mUvList) {
-                fs.WriteLine(uvformat, 1.0 - uv[0], uv[1]);
-            }
-        } else if (InvertV) {
-            foreach (var uv in mUvList) {
-                fs.WriteLine(uvformat, uv[0], 1.0 - uv[1]);
-            }
-        } else {
-            foreach (var uv in mUvList) {
-                fs.WriteLine(uvformat, uv[0], uv[1]);
-            }
-        }
-
         // Surface
         foreach (var obj in mObjectList) {
             var curMaterial = "";
