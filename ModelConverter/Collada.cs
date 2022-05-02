@@ -1758,8 +1758,6 @@ namespace ModelConverter {
             }
         }
 
-        public override void Normalize(float scale = 1) { }
-
         public override void Save(string path) {
             XmlWriterSettings xmls = new XmlWriterSettings();
             xmls.Indent = true;

@@ -2,7 +2,7 @@
   "profiles": {
     "ModelConverter": {
       "commandName": "Project",
-      "commandLineArgs": "C:\\Users\\owner\\Desktop\\MMD\\Model\\MMD\\WINKミク\\しょうこ初音ミク.pmx"
+      "commandLineArgs": "\"C:\\Users\\user\\Desktop\\VS project\\ModelConverter\\ModelConverter\\bin\\Debug\\net6.0\\piece-05_500x500_Kuboki.mqoz\""
     }
   }
 }

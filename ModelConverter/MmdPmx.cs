@@ -1058,8 +1058,6 @@ namespace ModelConverter {
             fs.Dispose();
         }
 
-        public override void Normalize(float scale = 1) { }
-
         void loadHeader(BinaryReader br) {
             br.ReadUInt32();
             br.ReadSingle();

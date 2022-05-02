@@ -105,33 +105,27 @@ namespace ModelConverter {
                 saveFilePath = tmpFilePath;
 
                 // Load model
-                StlText stlText = null;
-                StlBin stlBin = null;
-                WavefrontObj wavefrontObj = null;
-                Metasequoia metasequoia = null;
-                Collada collada = null;
-                MmdPmx mmdPmx = null;
+                BaseModel srcModel = null;
                 try {
                     switch (ext.ToLower()) {
                     case ".stl":
-                        stlText = new StlText(filePath);
-                        if (0 == stlText.ObjectList.Count) {
-                            stlText = null;
-                            stlBin = new StlBin(filePath);
+                        srcModel = new StlText(filePath);
+                        if (0 == srcModel.ObjectCount) {
+                            srcModel = new StlBin(filePath);
                         }
                         break;
                     case ".obj":
-                        wavefrontObj = new WavefrontObj(filePath);
+                        srcModel = new WavefrontObj(filePath);
                         break;
                     case ".mqo":
                     case ".mqoz":
-                        metasequoia = new Metasequoia(filePath);
+                        srcModel = new Metasequoia(filePath);
                         break;
                     case ".dae":
-                        collada = new Collada(filePath);
+                        srcModel = new Collada(filePath);
                         break;
                     case ".pmx":
-                        mmdPmx = new MmdPmx(filePath);
+                        srcModel = new MmdPmx(filePath);
                         break;
                     }
                 } catch (Exception ex) {
@@ -139,556 +133,271 @@ namespace ModelConverter {
                     Console.ReadKey();
                 }
 
-                // Convert
                 BaseModel convertedModel = null;
-                try {
-                    // Convert from STL(text) model
-                    if (null != stlText) {
-                        switch (convertTo) {
-                        case STL_BIN:
-                            convertedModel = stlTextToStlBin(stlText);
-                            break;
-                        case STL_TEXT:
-                            convertedModel = stlText;
-                            break;
-                        case WAVEFRONT_OBJ:
-                            convertedModel = stlTextToWavefrontObj(stlText);
-                            break;
-                        case METASEQUOIA:
-                            convertedModel = stlTextToMetasequoia(stlText);
-                            break;
-                        }
-                    }
-                    // Convert from STL(bin) model
-                    if (null != stlBin) {
-                        switch (convertTo) {
-                        case STL_BIN:
-                            convertedModel = stlBin;
-                            break;
-                        case STL_TEXT:
-                            convertedModel = stlBinToStlText(stlBin);
-                            break;
-                        case WAVEFRONT_OBJ:
-                            convertedModel = stlBinToWavefrontObj(stlBin);
-                            break;
-                        case METASEQUOIA:
-                            convertedModel = stlBinToMetasequoia(stlBin);
-                            break;
-                        }
-                    }
-                    // Convert from WavefrontObj model
-                    if (null != wavefrontObj) {
-                        switch (convertTo) {
-                        case STL_BIN:
-                            convertedModel = wavefrontObjToStlBin(wavefrontObj);
-                            break;
-                        case STL_TEXT:
-                            convertedModel = wavefrontObjToStlText(wavefrontObj);
-                            break;
-                        case WAVEFRONT_OBJ:
-                            convertedModel = wavefrontObj;
-                            break;
-                        case METASEQUOIA:
-                            convertedModel = wavefrontObjToMetasequoia(wavefrontObj);
-                            break;
-                        case COLLADA:
-                            convertedModel = wavefrontObjToCollada(wavefrontObj);
-                            break;
-                        }
-                    }
-                    // Convert from Metasequoia model
-                    if (null != metasequoia) {
-                        switch (convertTo) {
-                        case STL_BIN:
-                            convertedModel = metasequoiaToStlBin(metasequoia);
-                            break;
-                        case STL_TEXT:
-                            convertedModel = metasequoiaToStlText(metasequoia);
-                            break;
-                        case WAVEFRONT_OBJ:
-                            convertedModel = metasequoiaToWavefrontObj(metasequoia);
-                            break;
-                        case METASEQUOIA:
-                            convertedModel = metasequoia;
-                            break;
-                        case COLLADA:
-                            convertedModel = metasequoiaToCollada(metasequoia);
-                            break;
-                        }
-                    }
-                } catch (Exception ex) {
-                    Console.WriteLine(ex);
-                    Console.ReadKey();
+                switch (convertTo) {
+                case STL_BIN:
+                    convertedModel = new StlBin();
+                    break;
+                case STL_TEXT:
+                    convertedModel = new StlText();
+                    break;
+                case WAVEFRONT_OBJ:
+                    convertedModel = new WavefrontObj();
+                    break;
+                case METASEQUOIA:
+                    convertedModel = new Metasequoia();
+                    break;
+                case COLLADA:
+                    convertedModel = new Collada();
+                    break;
                 }
 
                 // Save & Normalize
-                if (null != convertedModel) {
-                    if (mNomalizeFlg) {
-                        convertedModel.Normalize(mScale);
+                if (null == convertedModel) {
+                    continue;
+                }
+                convertedModel.Load(srcModel);
+                if (mNomalizeFlg) {
+                    convertedModel.Normalize(mScale);
+                }
+                if (srcModel is WavefrontObj || srcModel is Metasequoia) {
+                    if (convertedModel is StlBin || convertedModel is StlText) {
+                        convertedModel.SwapAxiz(BaseModel.ESwapAxiz.ZXY);
                     }
-                    convertedModel.InvertUV = invertUV;
-                    convertedModel.Save(saveFilePath);
                 }
+                if (srcModel is StlBin || srcModel is StlText) {
+                    if (convertedModel is WavefrontObj || convertedModel is Metasequoia) {
+                        convertedModel.SwapAxiz(BaseModel.ESwapAxiz.YZX);
+                    }
+                }
+                convertedModel.InvertUV = invertUV;
+                convertedModel.Save(saveFilePath);
             }
         }
-
-        #region Convert from STL(text) model
-        static StlBin stlTextToStlBin(StlText stl) {
-            var output = new StlBin();
-            foreach (var obj in stl.ObjectList) {
-                var curObject = new StlBin.Object();
-                curObject.Name = obj.Name;
-                curObject.SurfaceList = new List<StlBin.Surface>();
-                foreach (var s in obj.SurfaceList) {
-                    var curSurface = new StlBin.Surface();
-                    curSurface.Norm = new vec3(s.Norm);
-                    curSurface.V1 = new vec3(s.V1);
-                    curSurface.V2 = new vec3(s.V2);
-                    curSurface.V3 = new vec3(s.V3);
-                    curObject.SurfaceList.Add(curSurface);
-                }
-                output.ObjectList.Add(curObject);
-            }
-            return output;
-        }
-
-        static WavefrontObj stlTextToWavefrontObj(StlText stl) {
-            var output = new WavefrontObj();
-            foreach (var obj in stl.ObjectList) {
-                var curObject = new WavefrontObj.Object();
-                curObject.Name = obj.Name;
-                curObject.SurfaceList = new List<WavefrontObj.Surface>();
-                foreach (var s in obj.SurfaceList) {
-                    var surface = new WavefrontObj.Surface();
-                    surface.VertexIndex = new List<int>{
-                        output.VertexList.Count + 1,
-                        output.VertexList.Count + 2,
-                        output.VertexList.Count + 3
-                    };
-                    curObject.SurfaceList.Add(surface);
-                    output.VertexList.Add(new vec3(s.V1.y, s.V1.z, s.V1.x));
-                    output.VertexList.Add(new vec3(s.V2.y, s.V2.z, s.V2.x));
-                    output.VertexList.Add(new vec3(s.V3.y, s.V3.z, s.V3.x));
-                }
-                output.ObjectList.Add(curObject);
-            }
-            return output;
-        }
-
-        static Metasequoia stlTextToMetasequoia(StlText stl) {
-            var output = new Metasequoia();
-            foreach (var obj in stl.ObjectList) {
-                var curObject = new Metasequoia.Object();
-                curObject.Name = obj.Name;
-                curObject.Surfaces = new List<Metasequoia.Surface>();
-                curObject.VertList = new List<vec3>();
-                foreach (var s in obj.SurfaceList) {
-                    var curSurface = new Metasequoia.Surface();
-                    curSurface.Material = -1;
-                    curSurface.VertIdx = new List<int> {
-                        curObject.VertList.Count,
-                        curObject.VertList.Count + 1,
-                        curObject.VertList.Count + 2
-                    };
-                    curObject.VertList.Add(new vec3(s.V3.y, s.V3.z, s.V3.x));
-                    curObject.VertList.Add(new vec3(s.V2.y, s.V2.z, s.V2.x));
-                    curObject.VertList.Add(new vec3(s.V1.y, s.V1.z, s.V1.x));
-                    curObject.Surfaces.Add(curSurface);
-                }
-                output.ObjectList.Add(curObject);
-            }
-            return output;
-        }
-        #endregion
-
-        #region Convert from STL(bin) model
-        static StlText stlBinToStlText(StlBin stl) {
-            var output = new StlText();
-            foreach (var obj in stl.ObjectList) {
-                var curObject = new StlText.Object();
-                curObject.Name = obj.Name;
-                curObject.SurfaceList = new List<StlText.Surface>();
-                foreach (var s in obj.SurfaceList) {
-                    var curSurface = new StlText.Surface();
-                    curSurface.Norm = new vec3(s.Norm);
-                    curSurface.V1 = new vec3(s.V1);
-                    curSurface.V2 = new vec3(s.V2);
-                    curSurface.V3 = new vec3(s.V3);
-                    curObject.SurfaceList.Add(curSurface);
-                }
-                output.ObjectList.Add(curObject);
-            }
-            return output;
-        }
-
-        static WavefrontObj stlBinToWavefrontObj(StlBin stl) {
-            var output = new WavefrontObj();
-            foreach (var obj in stl.ObjectList) {
-                var curObject = new WavefrontObj.Object();
-                curObject.Name = obj.Name;
-                curObject.SurfaceList = new List<WavefrontObj.Surface>();
-                foreach (var s in obj.SurfaceList) {
-                    var surface = new WavefrontObj.Surface();
-                    surface.VertexIndex = new List<int> {
-                        output.VertexList.Count + 1,
-                        output.VertexList.Count + 2,
-                        output.VertexList.Count + 3
-                    };
-                    curObject.SurfaceList.Add(surface);
-                    output.VertexList.Add(new vec3(s.V1.y, s.V1.z, s.V1.x));
-                    output.VertexList.Add(new vec3(s.V2.y, s.V2.z, s.V2.x));
-                    output.VertexList.Add(new vec3(s.V3.y, s.V3.z, s.V3.x));
-                }
-                output.ObjectList.Add(curObject);
-            }
-            return output;
-        }
-
-        static Metasequoia stlBinToMetasequoia(StlBin stl) {
-            var output = new Metasequoia();
-            foreach (var obj in stl.ObjectList) {
-                var curObject = new Metasequoia.Object();
-                curObject.Name = obj.Name;
-                curObject.Surfaces = new List<Metasequoia.Surface>();
-                curObject.VertList = new List<vec3>();
-                foreach (var s in obj.SurfaceList) {
-                    var curSurface = new Metasequoia.Surface();
-                    curSurface.Material = -1;
-                    curSurface.VertIdx = new List<int> {
-                        curObject.VertList.Count,
-                        curObject.VertList.Count + 1,
-                        curObject.VertList.Count + 2
-                    };
-                    curObject.VertList.Add(new vec3(s.V3.y, s.V3.z, s.V3.x));
-                    curObject.VertList.Add(new vec3(s.V2.y, s.V2.z, s.V2.x));
-                    curObject.VertList.Add(new vec3(s.V1.y, s.V1.z, s.V1.x));
-                    curObject.Surfaces.Add(curSurface);
-                }
-                output.ObjectList.Add(curObject);
-            }
-            return output;
-        }
-        #endregion
 
         #region Convert from WavefrontObj model
-        static StlBin wavefrontObjToStlBin(WavefrontObj obj) {
-            Console.WriteLine("STLはマテリアル情報を持てないため、マテリアル情報は消えます");
-            obj.ToTriangle();
-            var output = new StlBin();
-            foreach (var o in obj.ObjectList) {
-                var curObject = new StlBin.Object();
-                curObject.Name = o.Name;
-                curObject.SurfaceList = new List<StlBin.Surface>();
-                foreach (var s in o.SurfaceList) {
-                    var curSaface = new StlBin.Surface();
-                    var va = obj.VertexList[s.VertexIndex[0] - 1];
-                    var vo = obj.VertexList[s.VertexIndex[1] - 1];
-                    var vb = obj.VertexList[s.VertexIndex[2] - 1];
-                    curSaface.Norm = ((va - vo) * (vb - vo)).Norm;
-                    curSaface.V1 = new vec3(va.z, va.x, va.y);
-                    curSaface.V2 = new vec3(vo.z, vo.x, vo.y);
-                    curSaface.V3 = new vec3(vb.z, vb.x, vb.y);
-                    curObject.SurfaceList.Add(curSaface);
-                }
-                output.ObjectList.Add(curObject);
-            }
-            return output;
-        }
-
-        static StlText wavefrontObjToStlText(WavefrontObj obj) {
-            Console.WriteLine("STLはマテリアル情報を持てないため、マテリアル情報は消えます");
-            obj.ToTriangle();
-            var output = new StlText();
-            foreach (var o in obj.ObjectList) {
-                var curObject = new StlText.Object();
-                curObject.Name = o.Name;
-                curObject.SurfaceList = new List<StlText.Surface>();
-                foreach (var s in o.SurfaceList) {
-                    var curSaface = new StlText.Surface();
-                    var va = obj.VertexList[s.VertexIndex[0] - 1];
-                    var vo = obj.VertexList[s.VertexIndex[1] - 1];
-                    var vb = obj.VertexList[s.VertexIndex[2] - 1];
-                    curSaface.Norm = ((va - vo) * (vb - vo)).Norm;
-                    curSaface.V1 = new vec3(va.z, va.x, va.y);
-                    curSaface.V2 = new vec3(vo.z, vo.x, vo.y);
-                    curSaface.V3 = new vec3(vb.z, vb.x, vb.y);
-                    curObject.SurfaceList.Add(curSaface);
-                }
-                output.ObjectList.Add(curObject);
-            }
-            return output;
-        }
-
         static Metasequoia wavefrontObjToMetasequoia(WavefrontObj obj) {
             var output = new Metasequoia();
-            if (obj.VertexList.Count == 0) {
-                return null;
-            }
-            foreach (var m in obj.MaterialList) {
-                var color = (m.Ambient.Abs < m.Diffuse.Abs) ? m.Diffuse.Norm : m.Ambient.Norm;
-                var mat = new Metasequoia.Material();
-                mat.Name = m.Name;
-                mat.R = color.x;
-                mat.G = color.y;
-                mat.B = color.z;
-                mat.A = m.Alpha;
-                mat.Diffuse = (float)m.Diffuse.Abs;
-                mat.Ambient = (float)m.Ambient.Abs;
-                mat.Specular = (float)m.Specular.Abs;
-                mat.SpecularPower = m.SpecularPower;
-                if (null != m.TexDiffuse) {
-                    mat.TexturePath = m.TexDiffuse.FileName;
-                }
-                if (null != m.TexAlapha) {
-                    mat.AlaphaPlanePath = m.TexAlapha.FileName;
-                }
-                if (null != m.TexBumpMap) {
-                    mat.BumpMapPath = m.TexBumpMap.FileName;
-                }
-                output.MaterialList.Add(mat);
-            }
-            foreach (var o in obj.ObjectList) {
-                var curObj = new Metasequoia.Object();
-                curObj.Name = o.Name;
-                curObj.Surfaces = new List<Metasequoia.Surface>();
-                curObj.VertList = new List<vec3>();
-                var curObjVertexIdx = new List<int>();
-                foreach (var s in o.SurfaceList) {
-                    var curSurface = new Metasequoia.Surface();
-                    curSurface.Material = obj.GetMaterialIndex(s.MaterialName);
-                    // Vertex
-                    curSurface.VertIdx = new List<int>();
-                    for (int i = s.VertexIndex.Count - 1; 0 <= i; i--) {
-                        var idx = s.VertexIndex[i] - 1;
-                        if (!curObjVertexIdx.Contains(idx)) {
-                            curObjVertexIdx.Add(idx);
-                            curObj.VertList.Add(obj.VertexList[idx]);
-                        };
-                        curSurface.VertIdx.Add(curObjVertexIdx.IndexOf(idx));
-                    }
-                    // UV
-                    curSurface.UvList = new List<float[]>();
-                    for (int i = 0; i < s.UvIndex.Count; i++) {
-                        var uv = obj.UvList[s.UvIndex[i] - 1];
-                        curSurface.UvList.Add(uv);
-                    }
-                    curObj.Surfaces.Add(curSurface);
-                }
-                output.ObjectList.Add(curObj);
-            }
+            //if (obj.VertList.Count == 0) {
+            //    return null;
+            //}
+            //foreach (var m in obj.MaterialList) {
+            //    var color = (m.Ambient.Abs < m.Diffuse.Abs) ? m.Diffuse.Norm : m.Ambient.Norm;
+            //    var mat = new Metasequoia.Material();
+            //    mat.Name = m.Name;
+            //    mat.R = color.x;
+            //    mat.G = color.y;
+            //    mat.B = color.z;
+            //    mat.A = m.Alpha;
+            //    mat.Diffuse = (float)m.Diffuse.Abs;
+            //    mat.Ambient = (float)m.Ambient.Abs;
+            //    mat.Specular = (float)m.Specular.Abs;
+            //    mat.SpecularPower = m.SpecularPower;
+            //    if (null != m.TexDiffuse) {
+            //        mat.TexturePath = m.TexDiffuse.FileName;
+            //    }
+            //    if (null != m.TexAlapha) {
+            //        mat.AlaphaPlanePath = m.TexAlapha.FileName;
+            //    }
+            //    if (null != m.TexBumpMap) {
+            //        mat.BumpMapPath = m.TexBumpMap.FileName;
+            //    }
+            //    output.MaterialList.Add(mat);
+            //}
+            //foreach (var o in obj.ObjectList) {
+            //    var curObj = new Metasequoia.Object();
+            //    curObj.Name = o.Name;
+            //    curObj.Surfaces = new List<Metasequoia.Surface>();
+            //    curObj.VertList = new List<vec3>();
+            //    var curObjVertexIdx = new List<int>();
+            //    foreach (var s in o.Surfaces) {
+            //        var curSurface = new Metasequoia.Surface();
+            //        curSurface.Material = obj.GetMaterialIndex(s.MaterialName);
+            //        // Vertex
+            //        curSurface.VertIdx = new List<int>();
+            //        for (int i = s.VertIdx.Count - 1; 0 <= i; i--) {
+            //            var idx = s.VertIdx[i] - 1;
+            //            if (!curObjVertexIdx.Contains(idx)) {
+            //                curObjVertexIdx.Add(idx);
+            //                curObj.VertList.Add(obj.VertList[idx]);
+            //            };
+            //            curSurface.VertIdx.Add(curObjVertexIdx.IndexOf(idx));
+            //        }
+            //        // UV
+            //        curSurface.UvList = new List<float[]>();
+            //        for (int i = 0; i < s.UvIdx.Count; i++) {
+            //            var uv = obj.UvList[s.UvIdx[i] - 1];
+            //            curSurface.UvList.Add(uv);
+            //        }
+            //        curObj.Surfaces.Add(curSurface);
+            //    }
+            //    output.ObjectList.Add(curObj);
+            //}
             return output;
         }
 
         static Collada wavefrontObjToCollada(WavefrontObj obj) {
             var output = new Collada();
-            foreach (var m in obj.MaterialList) {
-                var mat = new Collada.MATERIAL();
-                mat.Name = m.Name;
+            //foreach (var m in obj.MaterialList) {
+            //    var mat = new Collada.MATERIAL();
+            //    mat.Name = m.Name;
 
-                mat.DiffuseTexture = m.TexDiffuse.FileName;
-                mat.AmbientTexture = m.TexAmbient.FileName;
-                mat.SpecularTexture = m.TexSpecular.FileName;
+            //    mat.DiffuseTexture = m.TexDiffuse.FileName;
+            //    mat.AmbientTexture = m.TexAmbient.FileName;
+            //    mat.SpecularTexture = m.TexSpecular.FileName;
 
-                if (0.0 < m.Diffuse.Abs) {
-                    mat.DiffuseColor = new double[] {
-                        m.Diffuse.x,
-                        m.Diffuse.y,
-                        m.Diffuse.z,
-                        1
-                    };
-                }
-                if (0.0 < m.Ambient.Abs) {
-                    mat.AmbientColor = new double[] {
-                        m.Ambient.x,
-                        m.Ambient.y,
-                        m.Ambient.z,
-                        1
-                    };
-                }
-                if (0.0 < m.Specular.Abs) {
-                    mat.SpecularColor = new double[] {
-                        m.Specular.x,
-                        m.Specular.y,
-                        m.Specular.z,
-                        1
-                    };
-                }
+            //    if (0.0 < m.Diffuse.Abs) {
+            //        mat.DiffuseColor = new double[] {
+            //            m.Diffuse.x,
+            //            m.Diffuse.y,
+            //            m.Diffuse.z,
+            //            1
+            //        };
+            //    }
+            //    if (0.0 < m.Ambient.Abs) {
+            //        mat.AmbientColor = new double[] {
+            //            m.Ambient.x,
+            //            m.Ambient.y,
+            //            m.Ambient.z,
+            //            1
+            //        };
+            //    }
+            //    if (0.0 < m.Specular.Abs) {
+            //        mat.SpecularColor = new double[] {
+            //            m.Specular.x,
+            //            m.Specular.y,
+            //            m.Specular.z,
+            //            1
+            //        };
+            //    }
 
-                output.AddMaterial(mat);
-            }
-            foreach (var o in obj.ObjectList) {
-                var cobj = new Collada.OBJECT();
-                foreach (var s in o.SurfaceList) {
-                    cobj.Name = o.Name;
-                    cobj.Material = s.MaterialName;
-                    cobj.Vert = new List<vec3>();
-                    cobj.Norm = new List<vec3>();
-                    cobj.UV = new List<double[]>();
-                    cobj.Face = new List<int[]>();
-                    for (int i = 0; i < s.VertexIndex.Count; i++) {
-                    }
-                    output.AddObject(cobj);
-                }
-            }
+            //    output.AddMaterial(mat);
+            //}
+            //foreach (var o in obj.mObjectList) {
+            //    var cobj = new Collada.OBJECT();
+            //    foreach (var s in o.Surfaces) {
+            //        cobj.Name = o.Name;
+            //        cobj.Material = s.MaterialName;
+            //        cobj.Vert = new List<vec3>();
+            //        cobj.Norm = new List<vec3>();
+            //        cobj.UV = new List<double[]>();
+            //        cobj.Face = new List<int[]>();
+            //        for (int i = 0; i < s.VertIdx.Count; i++) {
+            //        }
+            //        output.AddObject(cobj);
+            //    }
+            //}
             return output;
         }
         #endregion
 
         #region Convert from Metasequoia model
-        static StlBin metasequoiaToStlBin(Metasequoia mqo) {
-            Console.WriteLine("STLはマテリアル情報を持てないため、マテリアル情報は消えます");
-            mqo.ToTriangle();
-            var output = new StlBin();
-            foreach (var obj in mqo.ObjectList) {
-                var curObject = new StlBin.Object();
-                curObject.Name = obj.Name;
-                curObject.SurfaceList = new List<StlBin.Surface>();
-                foreach (var s in obj.Surfaces) {
-                    var curSurface = new StlBin.Surface();
-                    var va = obj.VertList[s.VertIdx[0]];
-                    var vo = obj.VertList[s.VertIdx[1]];
-                    var vb = obj.VertList[s.VertIdx[2]];
-                    curSurface.Norm = ((va - vo) * (vb - vo)).Norm;
-                    curSurface.V1 = new vec3(vb.z, vb.x, vb.y);
-                    curSurface.V2 = new vec3(vo.z, vo.x, vo.y);
-                    curSurface.V3 = new vec3(va.z, va.x, va.y);
-                    curObject.SurfaceList.Add(curSurface);
-                }
-                output.ObjectList.Add(curObject);
-            }
-            return output;
-        }
-
-        static StlText metasequoiaToStlText(Metasequoia mqo) {
-            Console.WriteLine("STLはマテリアル情報を持てないため、マテリアル情報は消えます");
-            mqo.ToTriangle();
-            var output = new StlText();
-            foreach (var obj in mqo.ObjectList) {
-                var curObject = new StlText.Object();
-                curObject.Name = obj.Name;
-                curObject.SurfaceList = new List<StlText.Surface>();
-                foreach (var s in obj.Surfaces) {
-                    var curSurface = new StlText.Surface();
-                    var va = obj.VertList[s.VertIdx[0]];
-                    var vo = obj.VertList[s.VertIdx[1]];
-                    var vb = obj.VertList[s.VertIdx[2]];
-                    curSurface.Norm = ((va - vo) * (vb - vo)).Norm;
-                    curSurface.V1 = new vec3(vb.z, vb.x, vb.y);
-                    curSurface.V2 = new vec3(vo.z, vo.x, vo.y);
-                    curSurface.V3 = new vec3(va.z, va.x, va.y);
-                    curObject.SurfaceList.Add(curSurface);
-                }
-                output.ObjectList.Add(curObject);
-            }
-            return output;
-        }
-
         static WavefrontObj metasequoiaToWavefrontObj(Metasequoia mqo) {
             var output = new WavefrontObj();
-            foreach (var m in mqo.MaterialList) {
-                var color = new vec3(m.R, m.G, m.B);
-                var mat = new WavefrontObj.Material();
-                mat.Name = m.Name;
-                mat.Diffuse = color * m.Diffuse;
-                mat.Ambient = color * m.Ambient;
-                mat.Specular = new vec3(1, 1, 1) * m.Specular;
-                mat.SpecularPower = m.SpecularPower;
-                mat.Alpha = m.A;
-                if (!string.IsNullOrEmpty(m.TexturePath)) {
-                    mat.TexDiffuse = new WavefrontObj.Texture();
-                    mat.TexDiffuse.FileName = m.TexturePath;
-                    mat.TexDiffuse.ChannelR = true;
-                    mat.TexDiffuse.ChannelG = true;
-                    mat.TexDiffuse.ChannelB = true;
-                }
-                if (!string.IsNullOrEmpty(m.BumpMapPath)) {
-                    mat.TexBumpMap = new WavefrontObj.Texture();
-                    mat.TexBumpMap.FileName = m.BumpMapPath;
-                    mat.TexBumpMap.ChannelL = true;
-                }
-                if (!string.IsNullOrEmpty(m.AlaphaPlanePath)) {
-                    mat.TexAlapha = new WavefrontObj.Texture();
-                    mat.TexAlapha.FileName = m.AlaphaPlanePath;
-                    mat.TexAlapha.ChannelM = true;
-                }
-                output.MaterialList.Add(mat);
-            }
-            foreach (var obj in mqo.ObjectList) {
-                var curObject = new WavefrontObj.Object();
-                curObject.Name = obj.Name;
-                curObject.SurfaceList = new List<WavefrontObj.Surface>();
-                foreach (var s in obj.Surfaces) {
-                    var surface = new WavefrontObj.Surface();
-                    if (0 <= s.Material) {
-                        surface.MaterialName = mqo.MaterialList[s.Material].Name;
-                    }
-                    surface.VertexIndex = new List<int>();
-                    surface.UvIndex = new List<int>();
-                    for (int i = s.VertIdx.Count - 1; 0 <= i; i--) {
-                        surface.VertexIndex.Add(output.VertexList.Count + s.VertIdx[i] + 1);
-                    }
-                    for (int idx = s.UvList.Count - 1; 0 <= idx; idx--) {
-                        surface.UvIndex.Add(output.UvList.Count + idx + 1);
-                    }
-                    curObject.SurfaceList.Add(surface);
-                    foreach (var uv in s.UvList) {
-                        output.UvList.Add(new float[] { uv[0], uv[1] });
-                    }
-                }
-                foreach (var v in obj.VertList) {
-                    output.VertexList.Add(v);
-                }
-                output.ObjectList.Add(curObject);
-            }
+            //foreach (var m in mqo.MaterialList) {
+            //    var color = new vec3(m.R, m.G, m.B);
+            //    var mat = new WavefrontObj.Material();
+            //    mat.Name = m.Name;
+            //    mat.Diffuse = color * m.Diffuse;
+            //    mat.Ambient = color * m.Ambient;
+            //    mat.Specular = new vec3(1, 1, 1) * m.Specular;
+            //    mat.SpecularPower = m.SpecularPower;
+            //    mat.Alpha = m.A;
+            //    if (!string.IsNullOrEmpty(m.TexturePath)) {
+            //        mat.TexDiffuse = new WavefrontObj.Texture();
+            //        mat.TexDiffuse.FileName = m.TexturePath;
+            //        mat.TexDiffuse.ChannelR = true;
+            //        mat.TexDiffuse.ChannelG = true;
+            //        mat.TexDiffuse.ChannelB = true;
+            //    }
+            //    if (!string.IsNullOrEmpty(m.BumpMapPath)) {
+            //        mat.TexBumpMap = new WavefrontObj.Texture();
+            //        mat.TexBumpMap.FileName = m.BumpMapPath;
+            //        mat.TexBumpMap.ChannelL = true;
+            //    }
+            //    if (!string.IsNullOrEmpty(m.AlaphaPlanePath)) {
+            //        mat.TexAlapha = new WavefrontObj.Texture();
+            //        mat.TexAlapha.FileName = m.AlaphaPlanePath;
+            //        mat.TexAlapha.ChannelM = true;
+            //    }
+            //    output.MaterialList.Add(mat);
+            //}
+            //foreach (var obj in mqo.ObjectList) {
+            //    var curObject = new WavefrontObj.Object();
+            //    curObject.Name = obj.Name;
+            //    curObject.Surfaces = new List<WavefrontObj.Surface>();
+            //    foreach (var s in obj.Surfaces) {
+            //        var surface = new WavefrontObj.Surface();
+            //        if (0 <= s.Material) {
+            //            surface.MaterialName = mqo.MaterialList[s.Material].Name;
+            //        }
+            //        surface.VertIdx = new List<int>();
+            //        surface.UvIdx = new List<int>();
+            //        for (int i = s.VertIdx.Count - 1; 0 <= i; i--) {
+            //            surface.VertIdx.Add(output.mVertList.Count + s.VertIdx[i] + 1);
+            //        }
+            //        for (int idx = s.UvList.Count - 1; 0 <= idx; idx--) {
+            //            surface.UvIdx.Add(output.mUvList.Count + idx + 1);
+            //        }
+            //        curObject.Surfaces.Add(surface);
+            //        foreach (var uv in s.UvList) {
+            //            output.mUvList.Add(new float[] { uv[0], uv[1] });
+            //        }
+            //    }
+            //    foreach (var v in obj.VertList) {
+            //        output.mVertList.Add(v);
+            //    }
+            //    output.ObjectList.Add(curObject);
+            //}
             return output;
         }
 
         static Collada metasequoiaToCollada(Metasequoia mqo) {
             var output = new Collada();
-            foreach (var m in mqo.MaterialList) {
-                var mat = new Collada.MATERIAL();
-                mat.Name = m.Name;
+            //foreach (var m in mqo.MaterialList) {
+            //    var mat = new Collada.MATERIAL();
+            //    mat.Name = m.Name;
 
-                mat.DiffuseTexture = m.TexturePath;
+            //    mat.DiffuseTexture = m.TexturePath;
 
-                if (0.0 < m.Diffuse) {
-                    mat.DiffuseColor = new double[] {
-                        m.R * m.Diffuse,
-                        m.G * m.Diffuse,
-                        m.B * m.Diffuse,
-                        1
-                    };
-                }
-                if (0.0 < m.Ambient) {
-                    mat.AmbientColor = new double[] {
-                        m.R * m.Ambient,
-                        m.G * m.Ambient,
-                        m.B * m.Ambient,
-                        1
-                    };
-                }
-                if (0.0 < m.Specular) {
-                    mat.SpecularColor = new double[] {
-                        m.R * m.Specular,
-                        m.G * m.Specular,
-                        m.B * m.Specular,
-                        1
-                    };
-                }
+            //    if (0.0 < m.Diffuse) {
+            //        mat.DiffuseColor = new double[] {
+            //            m.R * m.Diffuse,
+            //            m.G * m.Diffuse,
+            //            m.B * m.Diffuse,
+            //            1
+            //        };
+            //    }
+            //    if (0.0 < m.Ambient) {
+            //        mat.AmbientColor = new double[] {
+            //            m.R * m.Ambient,
+            //            m.G * m.Ambient,
+            //            m.B * m.Ambient,
+            //            1
+            //        };
+            //    }
+            //    if (0.0 < m.Specular) {
+            //        mat.SpecularColor = new double[] {
+            //            m.R * m.Specular,
+            //            m.G * m.Specular,
+            //            m.B * m.Specular,
+            //            1
+            //        };
+            //    }
 
-                output.AddMaterial(mat);
-            }
-            foreach (var o in mqo.ObjectList) {
-                var surface = new Collada.OBJECT();
-                foreach (var s in o.Surfaces) {
-                    var mat = mqo.MaterialList[s.Material];
-                    surface.Material = mat.Name;
-                    surface.Vert = new List<vec3>();
-                    surface.Norm = new List<vec3>();
-                    surface.UV = new List<double[]>();
-                    surface.Face = new List<int[]>();
-                }
-            }
+            //    output.AddMaterial(mat);
+            //}
+            //foreach (var o in mqo.ObjectList) {
+            //    var surface = new Collada.OBJECT();
+            //    foreach (var s in o.Surfaces) {
+            //        var mat = mqo.MaterialList[s.Material];
+            //        surface.Material = mat.Name;
+            //        surface.Vert = new List<vec3>();
+            //        surface.Norm = new List<vec3>();
+            //        surface.UV = new List<double[]>();
+            //        surface.Face = new List<int[]>();
+            //    }
+            //}
             return output;
         }
         #endregion

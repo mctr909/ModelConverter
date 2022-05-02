@@ -15,18 +15,6 @@ class Metasequoia : BaseModel {
      *   }>
      */
 
-    public struct Object {
-        public string Name;
-        public List<vec3> VertList;
-        public List<Surface> Surfaces;
-    }
-
-    public struct Surface {
-        public List<int> VertIdx;
-        public List<float[]> UvList;
-        public int Material;
-    }
-
     public struct Material {
         public string Name;
         public float R;
@@ -43,7 +31,6 @@ class Metasequoia : BaseModel {
     }
 
     public List<Material> MaterialList = new List<Material>();
-    public List<Object> ObjectList = new List<Object>();
 
     string mCurrentChunk;
     List<string> mSkipChunks = new List<string> {
@@ -123,7 +110,7 @@ class Metasequoia : BaseModel {
             fs.WriteLine("Format Text Ver 1.1");
             fs.WriteLine();
             saveMaterial(fs);
-            foreach (var obj in ObjectList) {
+            foreach (var obj in mObjectList) {
                 fs.WriteLine("Object \"" + obj.Name + "\" {");
                 fs.WriteLine("\tdepth 0");
                 fs.WriteLine("\tfolding 0");
@@ -138,34 +125,52 @@ class Metasequoia : BaseModel {
                 fs.WriteLine("\tcolor 0.5 0.5 0.5");
                 fs.WriteLine("\tcolor_type 0");
                 // Vertex
+                var convIdxList = new Dictionary<int, int>();
                 {
-                    fs.WriteLine("\tvertex " + obj.VertList.Count + " {");
-                    foreach (var v in obj.VertList) {
-                        fs.WriteLine("\t\t{0} {1} {2}", v.x, v.y, v.z);
+                    var count = 0;
+                    foreach (var s in obj.Surfaces) {
+                        foreach (var vi in s.VertIdx) {
+                            if (!convIdxList.ContainsKey(vi)) {
+                                count++;
+                                convIdxList.Add(vi, convIdxList.Count);
+                            }
+                        }
+                    }
+                    convIdxList.Clear();
+                    fs.WriteLine("\tvertex " + count + " {");
+                    foreach (var s in obj.Surfaces) {
+                        foreach (var vi in s.VertIdx) {
+                            if (!convIdxList.ContainsKey(vi)) {
+                                var v = mVertList[vi];
+                                fs.WriteLine("\t\t{0} {1} {2}", v.x, v.y, v.z);
+                                convIdxList.Add(vi, convIdxList.Count);
+                            }
+                        }
                     }
                     fs.WriteLine("\t}");
                 }
                 // Face
                 {
                     fs.WriteLine("\tface " + obj.Surfaces.Count + " {");
-                    foreach (var f in obj.Surfaces) {
+                    foreach (var s in obj.Surfaces) {
                         // V
-                        fs.Write("\t\t {0} V(", f.VertIdx.Count);
-                        fs.Write("{0}", f.VertIdx[0]);
-                        for (int ivert = 1; ivert < f.VertIdx.Count; ivert++) {
-                            fs.Write(" {0}", f.VertIdx[ivert]);
+                        fs.Write("\t\t {0} V(", s.VertIdx.Count);
+                        fs.Write("{0}", convIdxList[s.VertIdx[0]]);
+                        for (int vi = 1; vi < s.VertIdx.Count; vi++) {
+                            fs.Write(" {0}", convIdxList[s.VertIdx[vi]]);
                         }
-                        // M
-                        fs.Write(") M({0})", f.Material);
-                        // UV
-                        if (f.UvList != null && 0 < f.UvList.Count) {
-                            fs.Write(" UV(");
-                            fs.Write("{0} {1}", f.UvList[0][0], f.UvList[0][1]);
-                            for (int iuv = 1; iuv < f.UvList.Count; iuv++) {
-                                fs.Write(" {0} {1}", f.UvList[iuv][0], f.UvList[iuv][1]);
-                            }
-                            fs.Write(")");
-                        }
+                        // Todo: M
+                        fs.Write(")");
+                        //fs.Write(") M({0})", f.Material);
+                        // Todo: UV
+                        //if (f.UvList != null && 0 < f.UvList.Count) {
+                        //    fs.Write(" UV(");
+                        //    fs.Write("{0} {1}", f.UvList[0][0], f.UvList[0][1]);
+                        //    for (int iuv = 1; iuv < f.UvList.Count; iuv++) {
+                        //        fs.Write(" {0} {1}", f.UvList[iuv][0], f.UvList[iuv][1]);
+                        //    }
+                        //    fs.Write(")");
+                        //}
                         fs.WriteLine();
                     }
                     fs.WriteLine("\t}");
@@ -179,96 +184,6 @@ class Metasequoia : BaseModel {
         }
 
         File.Delete(textFilePath);
-    }
-
-    public override void Normalize(float scale = 1) {
-        var ofs = new vec3(float.MaxValue, float.MaxValue, float.MaxValue);
-        foreach (var obj in ObjectList) {
-            foreach (var v in obj.VertList) {
-                ofs.x = Math.Min(ofs.x, v.x);
-                ofs.y = Math.Min(ofs.y, v.y);
-                ofs.z = Math.Min(ofs.z, v.z);
-            }
-        }
-        var max = new vec3(float.MinValue, float.MinValue, float.MinValue);
-        foreach (var obj in ObjectList) {
-            foreach (var v in obj.VertList) {
-                var sv = v - ofs;
-                max.x = Math.Max(max.x, sv.x);
-                max.y = Math.Max(max.y, sv.y);
-                max.z = Math.Max(max.z, sv.z);
-            }
-        }
-        var size = Math.Max(max.x, Math.Max(max.y, max.z));
-        foreach (var obj in ObjectList) {
-            for (int i = 0; i < obj.VertList.Count; i++) {
-                obj.VertList[i] *= scale / size;
-            }
-        }
-    }
-
-    public void ToTriangle() {
-        for (int j = 0; j < ObjectList.Count; j++) {
-            var obj = ObjectList[j];
-            var surfaceList = new List<Surface>();
-            foreach (var s in obj.Surfaces) {
-                if (s.VertIdx.Count % 2 == 0) {
-                    evenPoligon(surfaceList, s.VertIdx);
-                } else {
-                    oddPoligon(surfaceList, s.VertIdx);
-                }
-            }
-            obj.Surfaces.Clear();
-            foreach (var s in surfaceList) {
-                obj.Surfaces.Add(s);
-            }
-        }
-    }
-
-    void oddPoligon(List<Surface> surfaceList, List<int> vertexIndex) {
-        var surface = new Surface();
-        surface.VertIdx = new List<int> {
-            vertexIndex[vertexIndex.Count - 2],
-            vertexIndex[vertexIndex.Count - 1],
-            vertexIndex[0]
-        };
-        surfaceList.Add(surface);
-        for (int i = 0; i < vertexIndex.Count / 2 - 1; i++) {
-            surface = new Surface();
-            surface.VertIdx = new List<int> {
-                vertexIndex[i],
-                vertexIndex[i + 1],
-                vertexIndex[vertexIndex.Count - i - 3]
-            };
-            surfaceList.Add(surface);
-            surface = new Surface();
-            surface.VertIdx = new List<int> {
-                vertexIndex[vertexIndex.Count - i - 3],
-                vertexIndex[vertexIndex.Count - i - 2],
-                vertexIndex[i]
-            };
-            surfaceList.Add(surface);
-        }
-    }
-
-    void evenPoligon(List<Surface> surfaceList, List<int> vertexIndex) {
-        Surface surface;
-        for (int i = 0; i < vertexIndex.Count / 2 - 1; i++) {
-            surface = new Surface();
-            surface.VertIdx = new List<int> {
-                vertexIndex[i],
-                vertexIndex[i + 1],
-                vertexIndex[vertexIndex.Count - i - 2]
-            };
-            surfaceList.Add(surface);
-            surface = new Surface();
-            surface.VertIdx = new List<int> {
-                vertexIndex[vertexIndex.Count - i - 2],
-                vertexIndex[vertexIndex.Count - i - 1],
-                vertexIndex[i]
-            };
-            surfaceList.Add(surface);
-        }
     }
 
     void loadMaterial(StreamReader fs) {
@@ -371,6 +286,7 @@ class Metasequoia : BaseModel {
     }
 
     void loadObject(StreamReader fs, string name) {
+        var idxOfs = 0;
         var obj = new Object();
         obj.Name = name;
         while (!fs.EndOfStream) {
@@ -402,16 +318,18 @@ class Metasequoia : BaseModel {
             case "\tnormal_weight":
                 break;
             case "\tvertex":
-                obj.VertList = loadVertex(fs);
+                idxOfs = mVertList.Count;
+                loadVertex(fs);
                 break;
             case "\tBVertex":
-                obj.VertList = loadBVertex(fs);
+                idxOfs = mVertList.Count;
+                loadBVertex(fs);
                 break;
             case "\tface":
-                obj.Surfaces = loadFace(fs);
+                obj.Surfaces = loadFace(fs, idxOfs);
                 break;
             case "}":
-                ObjectList.Add(obj);
+                mObjectList.Add(obj);
                 return;
             default:
                 return;
@@ -420,9 +338,8 @@ class Metasequoia : BaseModel {
         return;
     }
 
-    List<vec3> loadVertex(StreamReader fs) {
+    void loadVertex(StreamReader fs) {
         float x, y, z;
-        var vertex = new List<vec3>();
         while (!fs.EndOfStream) {
             var line = fs.ReadLine();
             var cols = line.Split(" ");
@@ -430,24 +347,22 @@ class Metasequoia : BaseModel {
                 continue;
             }
             if (cols[0] == "\t}") {
-                return vertex;
+                return;
             }
 
             if (float.TryParse(cols[0].Replace("\t", ""), out x)) {
                 float.TryParse(cols[1], out y);
                 float.TryParse(cols[2], out z);
-                vertex.Add(new vec3(x, y, z));
+                mVertList.Add(new vec3(x, y, z));
             }
         }
-        return null;
+        return;
     }
 
-    List<vec3> loadBVertex(StreamReader fs) {
-        var vertex = new List<vec3>();
-        return vertex;
+    void loadBVertex(StreamReader fs) {
     }
 
-    List<Surface> loadFace(StreamReader fs) {
+    List<Surface> loadFace(StreamReader fs, int idxOfs) {
         var surfaceList = new List<Surface>();
         while (!fs.EndOfStream) {
             var line = fs.ReadLine();
@@ -461,9 +376,6 @@ class Metasequoia : BaseModel {
             line = line.TrimStart();
 
             var surface = new Surface();
-            surface.VertIdx = new List<int>();
-            surface.UvList = new List<float[]>();
-            surface.Material = -1;
 
             // Vertex count
             var vertexCountEnd = line.IndexOf(" ");
@@ -476,20 +388,22 @@ class Metasequoia : BaseModel {
                 case "V": {
                     var indexes = cols[colIdx + 1].Split(" ");
                     foreach (var idx in indexes) {
-                        surface.VertIdx.Add(int.Parse(idx));
+                        surface.VertIdx.Add(idxOfs + int.Parse(idx));
                     }
                     break;
                 }
-                case "M":
-                    surface.Material = int.Parse(cols[colIdx + 1]);
-                    break;
-                case "UV": {
-                    var uv = cols[colIdx + 1].Split(" ");
-                    for (int i = 0; i < uv.Length; i += 2) {
-                        surface.UvList.Add(new float[] { float.Parse(uv[i]), float.Parse(uv[i + 1]) });
-                    }
-                    break;
-                }
+                //Todo:M
+                //case "M":
+                //    surface.Material = int.Parse(cols[colIdx + 1]);
+                //    break;
+                //Todo:UV
+                //case "UV": {
+                //    var uv = cols[colIdx + 1].Split(" ");
+                //    for (int i = 0; i < uv.Length; i += 2) {
+                //        surface.UvList.Add(new float[] { float.Parse(uv[i]), float.Parse(uv[i + 1]) });
+                //    }
+                //    break;
+                //}
                 case "COL":
                 case "CRS":
                     break;

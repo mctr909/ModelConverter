@@ -27,6 +27,17 @@ class vec3 {
         this.y = y;
         this.z = z;
     }
+
+    public void Normalize() {
+        var r = (float)Math.Sqrt(this ^ this);
+        if (r == 0.0f) {
+            return;
+        }
+        x /= r;
+        y /= r;
+        z /= r;
+    }
+
     public static vec3 operator +(vec3 a, vec3 b) {
         return new vec3(a.x + b.x, a.y + b.y, a.z + b.z);
     }

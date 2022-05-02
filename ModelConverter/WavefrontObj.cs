@@ -3,17 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 
 class WavefrontObj : BaseModel {
-    public struct Surface {
-        public List<int> VertexIndex;
-        public List<int> UvIndex;
-        public string MaterialName;
-    }
-
-    public struct Object {
-        public string Name;
-        public List<Surface> SurfaceList;
-    }
-
     public struct Material {
         public string Name;
         public vec3 Diffuse;
@@ -187,16 +176,12 @@ class WavefrontObj : BaseModel {
     }
 
     public List<Material> MaterialList = new List<Material>();
-    public List<vec3> VertexList = new List<vec3>();
-    public List<float[]> UvList = new List<float[]>();
-    public List<Object> ObjectList = new List<Object>();
 
     public WavefrontObj() { }
 
     public WavefrontObj(string path) {
         var curMaterial = "";
         var curObject = new Object();
-        curObject.SurfaceList = new List<Surface>();
 
         using (var fs = new StreamReader(path)) {
             int row = 0;
@@ -229,7 +214,7 @@ class WavefrontObj : BaseModel {
                         return;
                     } else {
                         var v = new vec3(float.Parse(cols[1]), float.Parse(cols[2]), float.Parse(cols[3]));
-                        VertexList.Add(v);
+                        mVertList.Add(v);
                     }
                     break;
                 case "vt":
@@ -238,7 +223,7 @@ class WavefrontObj : BaseModel {
                         Console.ReadKey();
                         return;
                     }
-                    UvList.Add(new float[] { float.Parse(cols[1]), float.Parse(cols[2]) });
+                    mUvList.Add(new float[] { float.Parse(cols[1]), float.Parse(cols[2]) });
                     break;
                 case "vn":
                     break;
@@ -246,11 +231,10 @@ class WavefrontObj : BaseModel {
                     break;
 
                 case "g":
-                    if (0 < curObject.SurfaceList.Count) {
-                        ObjectList.Add(curObject);
+                    if (0 < curObject.Surfaces.Count) {
+                        mObjectList.Add(curObject);
                     }
                     curObject = new Object();
-                    curObject.SurfaceList = new List<Surface>();
                     if (2 <= cols.Length) {
                         curObject.Name = line.Substring(2).Replace("\"", "");
                     }
@@ -261,8 +245,6 @@ class WavefrontObj : BaseModel {
                     }
                     var s = new Surface();
                     s.MaterialName = curMaterial;
-                    s.VertexIndex = new List<int>();
-                    s.UvIndex = new List<int>();
                     int vertexIdx, uvIdx;
                     for (int i = 1; i < cols.Length; i++) {
                         var fcols = cols[i].Split("/");
@@ -273,7 +255,7 @@ class WavefrontObj : BaseModel {
                                 Console.ReadKey();
                                 return;
                             }
-                            s.VertexIndex.Add(vertexIdx);
+                            s.VertIdx.Add(vertexIdx - 1);
                             break;
                         case 2:
                             if (!int.TryParse(fcols[0], out vertexIdx)) {
@@ -286,8 +268,8 @@ class WavefrontObj : BaseModel {
                                 Console.ReadKey();
                                 return;
                             }
-                            s.VertexIndex.Add(vertexIdx);
-                            s.UvIndex.Add(uvIdx);
+                            s.VertIdx.Add(vertexIdx - 1);
+                            s.UvIdx.Add(uvIdx - 1);
                             break;
                         case 3:
                             if ("" == fcols[1]) {
@@ -296,7 +278,7 @@ class WavefrontObj : BaseModel {
                                     Console.ReadKey();
                                     return;
                                 }
-                                s.VertexIndex.Add(vertexIdx);
+                                s.VertIdx.Add(vertexIdx - 1);
                             } else {
                                 if (!int.TryParse(fcols[0], out vertexIdx)) {
                                     Console.WriteLine("頂点インデックスエラー velue\"{0}\"\n\"{1}\"", fcols[0], line);
@@ -308,25 +290,27 @@ class WavefrontObj : BaseModel {
                                     Console.ReadKey();
                                     return;
                                 }
-                                s.VertexIndex.Add(vertexIdx);
-                                s.UvIndex.Add(uvIdx);
+                                s.VertIdx.Add(vertexIdx - 1);
+                                s.UvIdx.Add(uvIdx - 1);
                             }
                             break;
                         }
                     }
-                    curObject.SurfaceList.Add(s);
+                    curObject.Surfaces.Add(s);
                     break;
                 default:
                     return;
                 }
             }
-            if (0 < curObject.SurfaceList.Count) {
-                ObjectList.Add(curObject);
+            if (0 < curObject.Surfaces.Count) {
+                mObjectList.Add(curObject);
             }
         }
     }
 
     public override void Save(string path) {
+        ToTriangle();
+
         // Material
         var mtlName = Path.GetFileNameWithoutExtension(path) + ".mtl";
         var mtlPath = Path.GetDirectoryName(path) + "\\" + mtlName;
@@ -335,32 +319,11 @@ class WavefrontObj : BaseModel {
         fs.WriteLine("mtllib {0}", mtlName);
 
         // Vertex
-        var vformat = "";
-        switch (SwapAxiz) {
-        case ESwapAxiz.XYZ:
-            vformat = "v {0} {1} {2}";
-            break;
-        case ESwapAxiz.XZY:
-            vformat = "v {0} {2} {1}";
-            break;
-        case ESwapAxiz.YXZ:
-            vformat = "v {1} {0} {2}";
-            break;
-        case ESwapAxiz.YZX:
-            vformat = "v {1} {2} {0}";
-            break;
-        case ESwapAxiz.ZXY:
-            vformat = "v {2} {0} {1}";
-            break;
-        case ESwapAxiz.ZYX:
-            vformat = "v {2} {1} {0}";
-            break;
-        }
         var signx = SignX;
         var signy = SignY;
         var signz = SignZ;
-        foreach (var v in VertexList) {
-            fs.WriteLine(vformat, v.x * signx, v.y * signy, v.z * signz);
+        foreach (var v in mVertList) {
+            fs.WriteLine("v {0} {1} {2}", v.x * signx, v.y * signy, v.z * signz);
         }
 
         // UV
@@ -371,139 +334,46 @@ class WavefrontObj : BaseModel {
             uvformat = "vt {0} {1}";
         }
         if (InvertU && InvertV) {
-            foreach (var uv in UvList) {
+            foreach (var uv in mUvList) {
                 fs.WriteLine(uvformat, 1.0 - uv[0], 1.0 - uv[1]);
             }
         } else if (InvertU) {
-            foreach (var uv in UvList) {
+            foreach (var uv in mUvList) {
                 fs.WriteLine(uvformat, 1.0 - uv[0], uv[1]);
             }
         } else if (InvertV) {
-            foreach (var uv in UvList) {
+            foreach (var uv in mUvList) {
                 fs.WriteLine(uvformat, uv[0], 1.0 - uv[1]);
             }
         } else {
-            foreach (var uv in UvList) {
+            foreach (var uv in mUvList) {
                 fs.WriteLine(uvformat, uv[0], uv[1]);
             }
         }
 
         // Surface
-        foreach (var obj in ObjectList) {
+        foreach (var obj in mObjectList) {
             var curMaterial = "";
             fs.WriteLine("g {0}", obj.Name.Replace("\"", ""));
-            foreach (var s in obj.SurfaceList) {
+            foreach (var s in obj.Surfaces) {
                 if (curMaterial != s.MaterialName) {
                     fs.WriteLine("usemtl {0}", s.MaterialName);
                     curMaterial = s.MaterialName;
                 }
                 fs.Write("f");
-                if (s.UvIndex != null && 0 < s.UvIndex.Count) {
-                    for (int i = 0; i < s.VertexIndex.Count; i++) {
-                        fs.Write(" {0}/{1}", s.VertexIndex[i], s.UvIndex[i]);
+                if (0 < s.UvIdx.Count) {
+                    for (int i = 0; i < s.VertIdx.Count; i++) {
+                        fs.Write(" {0}/{1}", s.VertIdx[i] + 1, s.UvIdx[i] + 1);
                     }
                 } else {
-                    for (int i = 0; i < s.VertexIndex.Count; i++) {
-                        fs.Write(" {0}", s.VertexIndex[i]);
+                    for (int i = 0; i < s.VertIdx.Count; i++) {
+                        fs.Write(" {0}", s.VertIdx[i] + 1);
                     }
                 }
                 fs.WriteLine();
             }
         }
         fs.Close();
-    }
-
-    public override void Normalize(float scale = 1) {
-        var ofs = new vec3(float.MaxValue, float.MaxValue, float.MaxValue);
-        foreach (var v in VertexList) {
-            ofs.x = Math.Min(ofs.x, v.x);
-            ofs.y = Math.Min(ofs.y, v.y);
-            ofs.z = Math.Min(ofs.z, v.z);
-        }
-        var max = new vec3(float.MinValue, float.MinValue, float.MinValue);
-        foreach (var v in VertexList) {
-            var sv = v - ofs;
-            max.x = Math.Max(max.x, sv.x);
-            max.y = Math.Max(max.y, sv.y);
-            max.z = Math.Max(max.z, sv.z);
-        }
-        var size = Math.Max(max.x, Math.Max(max.y, max.z));
-        for (int i = 0; i < VertexList.Count; i++) {
-            VertexList[i] *= scale / size;
-        }
-    }
-
-    public void ToTriangle() {
-        for (int j = 0; j < ObjectList.Count; j++) {
-            var obj = ObjectList[j];
-            var surfaceList = new List<Surface>();
-            foreach (var s in obj.SurfaceList) {
-                if (s.VertexIndex.Count % 2 == 0) {
-                    evenPoligon(surfaceList, s.VertexIndex);
-                } else {
-                    oddPoligon(surfaceList, s.VertexIndex);
-                }
-            }
-            obj.SurfaceList.Clear();
-            foreach(var s in surfaceList) {
-                obj.SurfaceList.Add(s);
-            }
-        }
-    }
-
-    public int GetMaterialIndex(string name) {
-        for (int i = 0; i < MaterialList.Count; i++) {
-            if (MaterialList[i].Name == name) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    void oddPoligon(List<Surface> surfaceList, List<int> vertexIndex) {
-        var surface = new Surface();
-        surface.VertexIndex = new List<int> {
-            vertexIndex[vertexIndex.Count - 2],
-            vertexIndex[vertexIndex.Count - 1],
-            vertexIndex[0]
-        };
-        surfaceList.Add(surface);
-        for (int i = 0; i < vertexIndex.Count / 2 - 1; i++) {
-            surface = new Surface();
-            surface.VertexIndex = new List<int> {
-                vertexIndex[i],
-                vertexIndex[i + 1],
-                vertexIndex[vertexIndex.Count - i - 3]
-            };
-            surfaceList.Add(surface);
-            surface = new Surface();
-            surface.VertexIndex = new List<int> {
-                vertexIndex[vertexIndex.Count - i - 3],
-                vertexIndex[vertexIndex.Count - i - 2],
-                vertexIndex[i]
-            };
-            surfaceList.Add(surface);
-        }
-    }
-
-    void evenPoligon(List<Surface> surfaceList, List<int> vertexIndex) {
-        Surface surface;
-        for (int i = 0; i < vertexIndex.Count / 2 - 1; i++) {
-            surface = new Surface();
-            surface.VertexIndex = new List<int> {
-                vertexIndex[i],
-                vertexIndex[i + 1],
-                vertexIndex[vertexIndex.Count - i - 2]
-            };
-            surfaceList.Add(surface);
-            surface = new Surface();
-            surface.VertexIndex = new List<int> {
-                vertexIndex[vertexIndex.Count - i - 2],
-                vertexIndex[vertexIndex.Count - i - 1],
-                vertexIndex[i]
-            };
-            surfaceList.Add(surface);
-        }
     }
 
     void loadMaterial(string path, string fileName) {
