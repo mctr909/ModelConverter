@@ -39,9 +39,11 @@ abstract class BaseModel {
     protected struct Surface {
         public string MaterialName;
         public List<Index> Indices;
+        public List<int> Line;
         public Surface() {
             MaterialName = "";
             Indices = new List<Index>();
+            Line = new List<int>();
         }
     }
 
@@ -184,16 +186,20 @@ abstract class BaseModel {
     protected void ToTriangle() {
         for (int j = 0; j < mObjectList.Count; j++) {
             var obj = mObjectList[j];
-            var surfaceList = new List<Surface>();
+            var tmpSurfList = new List<Surface>();
             foreach (var s in obj.Surfaces) {
+                if (s.Indices.Count < 4) {
+                    tmpSurfList.Add(s);
+                    continue;
+                }
                 if (s.Indices.Count % 2 == 0) {
-                    evenPoligon(surfaceList, s);
+                    evenPoligon(tmpSurfList, s);
                 } else {
-                    oddPoligon(surfaceList, s);
+                    oddPoligon(tmpSurfList, s);
                 }
             }
             obj.Surfaces.Clear();
-            foreach (var s in surfaceList) {
+            foreach (var s in tmpSurfList) {
                 obj.Surfaces.Add(s);
             }
         }

@@ -185,8 +185,6 @@ class WavefrontObj : BaseModel {
                 case "usemtl":
                     curMaterial = line.Substring(7).Replace("\"", "");
                     break;
-                case "l":
-                    break;
                 case "s":
                     break;
                 case "v":
@@ -219,7 +217,16 @@ class WavefrontObj : BaseModel {
                         curObject.Name = line.Substring(2).Replace("\"", "");
                     }
                     break;
-                case "f":
+                case "l": {
+                    var s = new Surface();
+                    s.MaterialName = curMaterial;
+                    for (int i = 1; i < cols.Length; i++) {
+                        s.Line.Add(int.Parse(cols[i]) - 1);
+                    }
+                    curObject.Surfaces.Add(s);
+                }
+                    break;
+                case "f": {
                     if (cols.Length < 4) {
                         return;
                     }
@@ -275,6 +282,7 @@ class WavefrontObj : BaseModel {
                         }
                     }
                     curObject.Surfaces.Add(s);
+                }
                     break;
                 default:
                     return;
@@ -315,17 +323,26 @@ class WavefrontObj : BaseModel {
                     fs.WriteLine("usemtl {0}", s.MaterialName);
                     curMaterial = s.MaterialName;
                 }
-                fs.Write("f");
-                if (0 < s.Indices.Count && 0 <= s.Indices[0].Uv) {
-                    for (int i = 0; i < s.Indices.Count; i++) {
-                        fs.Write(" {0}/{1}", s.Indices[i].Vert + 1, s.Indices[i].Uv + 1);
+                if (0 < s.Indices.Count) {
+                    fs.Write("f");
+                    if (0 <= s.Indices[0].Uv) {
+                        for (int i = 0; i < s.Indices.Count; i++) {
+                            fs.Write(" {0}/{1}", s.Indices[i].Vert + 1, s.Indices[i].Uv + 1);
+                        }
+                    } else {
+                        for (int i = 0; i < s.Indices.Count; i++) {
+                            fs.Write(" {0}", s.Indices[i].Vert + 1);
+                        }
                     }
-                } else {
-                    for (int i = 0; i < s.Indices.Count; i++) {
-                        fs.Write(" {0}", s.Indices[i].Vert + 1);
-                    }
+                    fs.WriteLine();
                 }
-                fs.WriteLine();
+                if (0 < s.Line.Count) {
+                    fs.Write("l");
+                    for (int i = 0; i < s.Line.Count; i++) {
+                        fs.Write(" {0}", s.Line[i] + 1);
+                    }
+                    fs.WriteLine();
+                }
             }
         }
         fs.Close();

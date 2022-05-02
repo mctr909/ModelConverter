@@ -125,6 +125,12 @@ class Metasequoia : BaseModel {
                                 convIdxList.Add(idx.Vert, convIdxList.Count);
                             }
                         }
+                        foreach (var idx in s.Line) {
+                            if (!convIdxList.ContainsKey(idx)) {
+                                count++;
+                                convIdxList.Add(idx, convIdxList.Count);
+                            }
+                        }
                     }
                     convIdxList.Clear();
                     fs.WriteLine("\tvertex " + count + " {");
@@ -136,6 +142,13 @@ class Metasequoia : BaseModel {
                                 convIdxList.Add(idx.Vert, convIdxList.Count);
                             }
                         }
+                        foreach (var idx in s.Line) {
+                            if (!convIdxList.ContainsKey(idx)) {
+                                var v = mVertList[idx];
+                                fs.WriteLine("\t\t{0} {1} {2}", v.x, v.y, v.z);
+                                convIdxList.Add(idx, convIdxList.Count);
+                            }
+                        }
                     }
                     fs.WriteLine("\t}");
                 }
@@ -143,16 +156,29 @@ class Metasequoia : BaseModel {
                 {
                     fs.WriteLine("\tface " + obj.Surfaces.Count + " {");
                     foreach (var s in obj.Surfaces) {
-                        // V
-                        fs.Write("\t\t {0} V(", s.Indices.Count);
-                        fs.Write("{0}", convIdxList[s.Indices[0].Vert]);
-                        for (int vi = 1; vi < s.Indices.Count; vi++) {
-                            fs.Write(" {0}", convIdxList[s.Indices[vi].Vert]);
+                        // V(surface)
+                        if (0 < s.Indices.Count) {
+                            fs.Write("\t\t {0} V(", s.Indices.Count);
+                            fs.Write("{0}", convIdxList[s.Indices[0].Vert]);
+                            for (int vi = 1; vi < s.Indices.Count; vi++) {
+                                fs.Write(" {0}", convIdxList[s.Indices[vi].Vert]);
+                            }
+                            fs.Write(")");
                         }
-                        fs.Write(")");
+                        // V(line)
+                        if (0 < s.Line.Count) {
+                            fs.Write("\t\t {0} V(", s.Line.Count);
+                            fs.Write("{0}", convIdxList[s.Line[0]]);
+                            for (int vi = 1; vi < s.Line.Count; vi++) {
+                                fs.Write(" {0}", convIdxList[s.Line[vi]]);
+                            }
+                            fs.Write(")");
+                        }
+                        // M
                         if (materialNameDic.ContainsKey(s.MaterialName)) {
                             fs.Write(" M({0})", materialNameDic[s.MaterialName]);
                         }
+                        // UV
                         if (0 < s.Indices.Count && 0 <= s.Indices[0].Uv) {
                             fs.Write(" UV(");
                             var uv = mUvList[s.Indices[0].Uv];
@@ -321,7 +347,7 @@ class Metasequoia : BaseModel {
                 loadBVertex(fs);
                 break;
             case "\tface":
-                obj.Surfaces = loadFace(fs, idxOfs);
+                loadFace(fs, idxOfs, obj);
                 break;
             case "}":
                 mObjectList.Add(obj);
@@ -357,8 +383,7 @@ class Metasequoia : BaseModel {
     void loadBVertex(StreamReader fs) {
     }
 
-    List<Surface> loadFace(StreamReader fs, int idxOfs) {
-    	var surfaceList = new List<Surface>();
+    void loadFace(StreamReader fs, int idxOfs, Object obj) {
         var matNames = new List<string>();
         foreach (var n in mMaterialList) {
             matNames.Add(n.Key);
@@ -370,7 +395,7 @@ class Metasequoia : BaseModel {
                 continue;
             }
             if (line == "\t}") {
-                return surfaceList;
+                return;
             }
 
             line = line.TrimStart();
@@ -389,8 +414,14 @@ class Metasequoia : BaseModel {
                 switch (type) {
                 case "V": {
                     var indexes = cols[colIdx + 1].Split(" ");
-                    foreach (var str in indexes) {
-                        vertIdx.Add(idxOfs + int.Parse(str));
+                    if (3 <= indexes.Length) {
+                        foreach (var str in indexes) {
+                            vertIdx.Add(idxOfs + int.Parse(str));
+                        }
+                    } else {
+                        foreach (var str in indexes) {
+                            surface.Line.Add(idxOfs + int.Parse(str));
+                        }
                     }
                     break;
                 }
@@ -423,8 +454,7 @@ class Metasequoia : BaseModel {
                 }
             }
 
-            surfaceList.Add(surface);
+            obj.Surfaces.Add(surface);
         }
-        return null;
     }
 }
