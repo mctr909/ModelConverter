@@ -83,6 +83,15 @@ class StlBin : BaseModel {
         var arrReserved = new byte[2];
         var fs = new FileStream(path, FileMode.Create);
         foreach (var obj in mObjectList) {
+            var surfCount = 0;
+            foreach (var s in obj.Surfaces) {
+                if (0 < s.Indices.Count) {
+                    surfCount++;
+                }
+            }
+            if (0 == surfCount) {
+                continue;
+            }
             byte[] tName = new byte[] { 0 };
             if (!string.IsNullOrEmpty(obj.Name)) {
                 tName = Encoding.UTF8.GetBytes(obj.Name);
@@ -90,8 +99,11 @@ class StlBin : BaseModel {
             var arrName = new byte[80];
             Array.Copy(tName, arrName, Math.Min(arrName.Length, tName.Length));
             fs.Write(arrName);
-            fs.Write(BitConverter.GetBytes(obj.Surfaces.Count));
+            fs.Write(BitConverter.GetBytes(surfCount));
             foreach (var s in obj.Surfaces) {
+                if (0 == s.Indices.Count) {
+                    continue;
+                }
                 // Normal
                 var nn = new vec3();
                 foreach (var idx in s.Indices) {

@@ -61,8 +61,20 @@ class StlText : BaseModel {
         ToTriangle();
         var fs = new StreamWriter(path);
         foreach (var obj in mObjectList) {
+            var surfCount = 0;
+            foreach (var s in obj.Surfaces) {
+                if (0 < s.Indices.Count) {
+                    surfCount++;
+                }
+            }
+            if (0 == surfCount) {
+                continue;
+            }
             fs.WriteLine("solid {0}", obj.Name);
             foreach (var s in obj.Surfaces) {
+                if (0 == s.Indices.Count) {
+                    continue;
+                }
                 var nn = new vec3();
                 foreach (var idx in s.Indices) {
                     if (0 <= idx.Norm) {
