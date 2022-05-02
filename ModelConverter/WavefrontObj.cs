@@ -191,9 +191,7 @@ class WavefrontObj : BaseModel {
                     break;
                 case "v":
                     if (cols.Length != 4) {
-                        Console.WriteLine("頂点の値の個数が4でない {0}\n\"{1}\"", cols.Length, line);
-                        Console.ReadKey();
-                        return;
+                        Console.WriteLine("頂点の値の個数が3でない Line:{0}\n\"{1}\"", row, line);
                     } else {
                         var v = new vec3(float.Parse(cols[1]), float.Parse(cols[2]), float.Parse(cols[3]));
                         mVertList.Add(v);
@@ -201,11 +199,11 @@ class WavefrontObj : BaseModel {
                     break;
                 case "vt":
                     if (cols.Length < 3) {
-                        Console.WriteLine("UVの値の個数が3未満 {0}\n\"{1}\"", cols.Length, line);
-                        Console.ReadKey();
-                        return;
+                        Console.WriteLine("UVの値の個数が2未満 Line:{0}\n\"{1}\"", row, line);
+                    } else {
+                        var uv = new float[] { float.Parse(cols[1]), float.Parse(cols[2]) };
+                        mUvList.Add(uv);
                     }
-                    mUvList.Add(new float[] { float.Parse(cols[1]), float.Parse(cols[2]) });
                     break;
                 case "vn":
                     break;
@@ -351,7 +349,7 @@ class WavefrontObj : BaseModel {
                 switch (cols[0]) {
                 case "newmtl":
                     if (!string.IsNullOrEmpty(material.Name)) {
-                        mMaterialList.Add(material);
+                        mMaterialList.Add(material.Name, material);
                     }
                     material = new Material();
                     material.Name = cols[1].Replace("\"", "");
@@ -402,7 +400,7 @@ class WavefrontObj : BaseModel {
                 }
             }
             if (!string.IsNullOrEmpty(material.Name)) {
-                mMaterialList.Add(material);
+                mMaterialList.Add(material.Name, material);
             }
         }
     }
@@ -412,14 +410,15 @@ class WavefrontObj : BaseModel {
             return;
         }
 
-        using(var fs = new StreamWriter(path)) {
-            foreach(var m in mMaterialList) {
-                fs.WriteLine("newmtl {0}", m.Name.Replace("\"", ""));
+        using (var fs = new StreamWriter(path)) {
+            foreach (var m in mMaterialList) {
+                var val = m.Value;
+                fs.WriteLine("newmtl {0}", val.Name.Replace("\"", ""));
                 fs.WriteLine("\tNs 5");
-                fs.WriteLine("\tKd {0} {1} {2}", m.Diffuse.x, m.Diffuse.y, m.Diffuse.z);
-                fs.WriteLine("\tKa {0} {1} {2}", m.Ambient.x, m.Ambient.y, m.Ambient.z);
-                fs.WriteLine("\tKs {0} {1} {2}", m.Specular.x, m.Specular.y, m.Specular.z);
-                fs.WriteLine("\td {0}", m.Alpha);
+                fs.WriteLine("\tKd {0} {1} {2}", val.Diffuse.x, val.Diffuse.y, val.Diffuse.z);
+                fs.WriteLine("\tKa {0} {1} {2}", val.Ambient.x, val.Ambient.y, val.Ambient.z);
+                fs.WriteLine("\tKs {0} {1} {2}", val.Specular.x, val.Specular.y, val.Specular.z);
+                fs.WriteLine("\td {0}", val.Alpha);
                 // Todo: tex
                 //if (null != m.TexDiffuse) {
                 //    fs.Write("\tmap_Kd");

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text;
 using System.IO;
 using System.IO.Compression;
 
@@ -86,9 +87,15 @@ class Metasequoia : BaseModel {
     }
 
     public override void Save(string path) {
+        var materialNameDic = new Dictionary<string, int>();
+        foreach (var n in mMaterialList) {
+            materialNameDic.Add(n.Key, materialNameDic.Count);
+        }
+
         var fileName = Path.GetFileNameWithoutExtension(path);
         var textFilePath = AppContext.BaseDirectory + fileName;
-        using (var fs = new StreamWriter(textFilePath)) {
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        using (var fs = new StreamWriter(textFilePath, false, Encoding.GetEncoding("Shift_JIS"))) {
             fs.WriteLine("Metasequoia Document");
             fs.WriteLine("Format Text Ver 1.1");
             fs.WriteLine();
@@ -142,7 +149,10 @@ class Metasequoia : BaseModel {
                         for (int vi = 1; vi < s.Indices.Count; vi++) {
                             fs.Write(" {0}", convIdxList[s.Indices[vi].Vert]);
                         }
-                        fs.Write(") M({0})", s.MaterialName);
+                        fs.Write(")");
+                        if (materialNameDic.ContainsKey(s.MaterialName)) {
+                            fs.Write(" M({0})", materialNameDic[s.MaterialName]);
+                        }
                         if (0 < s.Indices.Count && 0 <= s.Indices[0].Uv) {
                             fs.Write(" UV(");
                             var uv = mUvList[s.Indices[0].Uv];
@@ -236,7 +246,7 @@ class Metasequoia : BaseModel {
                 }
             }
 
-            mMaterialList.Add(mat);
+            mMaterialList.Add(mat.Name, mat);
         }
     }
 
@@ -246,23 +256,24 @@ class Metasequoia : BaseModel {
         }
         fs.WriteLine("Material " + mMaterialList.Count + " {");
         foreach (var m in mMaterialList) {
-            var col = m.Diffuse.Norm;
-            fs.Write("\t\"{0}\"", m.Name);
+            var val = m.Value;
+            var col = val.Diffuse.Norm;
+            fs.Write("\t\"{0}\"", val.Name);
             fs.Write(" shader(3)");
-            fs.Write(" col({0} {1} {2} {3})", col.x, col.y, col.z, m.Alpha);
-            fs.Write(" dif({0})", m.Diffuse.Abs);
-            fs.Write(" amb({0})", m.Ambient.Abs);
+            fs.Write(" col({0} {1} {2} {3})", col.x, col.y, col.z, val.Alpha);
+            fs.Write(" dif({0})", val.Diffuse.Abs);
+            fs.Write(" amb({0})", val.Ambient.Abs);
             fs.Write(" emi(0)");
-            fs.Write(" spe({0})", m.Specular.Abs);
-            fs.Write(" power({0})", m.SpecularPower);
-            if (!string.IsNullOrEmpty(m.TexDiffuse)) {
-                fs.Write(" tex({0})", m.TexDiffuse);
+            fs.Write(" spe({0})", val.Specular.Abs);
+            fs.Write(" power({0})", val.SpecularPower);
+            if (!string.IsNullOrEmpty(val.TexDiffuse)) {
+                fs.Write(" tex({0})", val.TexDiffuse);
             }
-            if (!string.IsNullOrEmpty(m.TexAlapha)) {
-                fs.Write(" aplane({0})", m.TexAlapha);
+            if (!string.IsNullOrEmpty(val.TexAlapha)) {
+                fs.Write(" aplane({0})", val.TexAlapha);
             }
-            if (!string.IsNullOrEmpty(m.TexBumpMap)) {
-                fs.Write(" bump({0})", m.TexBumpMap);
+            if (!string.IsNullOrEmpty(val.TexBumpMap)) {
+                fs.Write(" bump({0})", val.TexBumpMap);
             }
             fs.WriteLine();
         }
@@ -347,7 +358,12 @@ class Metasequoia : BaseModel {
     }
 
     List<Surface> loadFace(StreamReader fs, int idxOfs) {
-        var surfaceList = new List<Surface>();
+    	var surfaceList = new List<Surface>();
+        var matNames = new List<string>();
+        foreach (var n in mMaterialList) {
+            matNames.Add(n.Key);
+        }
+
         while (!fs.EndOfStream) {
             var line = fs.ReadLine();
             if (string.IsNullOrEmpty(line)) {
@@ -379,7 +395,7 @@ class Metasequoia : BaseModel {
                     break;
                 }
                 case "M":
-                    surface.MaterialName = mMaterialList[int.Parse(cols[colIdx + 1])].Name;
+                    surface.MaterialName = matNames[int.Parse(cols[colIdx + 1])];
                     break;
                 case "UV": {
                     var uv = cols[colIdx + 1].Split(" ");

@@ -70,7 +70,7 @@ abstract class BaseModel {
     protected List<vec3> mVertList = new List<vec3>();
     protected List<vec3> mNormList = new List<vec3>();
     protected List<float[]> mUvList = new List<float[]>();
-    protected List<Material> mMaterialList = new List<Material>();
+    protected Dictionary<string, Material> mMaterialList = new Dictionary<string, Material>();
 
     public bool SwapUV = false;
     public EInvertAxiz InvertAxiz = EInvertAxiz.None;
@@ -86,7 +86,7 @@ abstract class BaseModel {
 
     public void Load(BaseModel srcModel) {
         foreach (var m in srcModel.mMaterialList) {
-            mMaterialList.Add(m);
+            mMaterialList.Add(m.Key, m.Value);
         }
         foreach (var o in srcModel.mObjectList) {
             mObjectList.Add(o);
