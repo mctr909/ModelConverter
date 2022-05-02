@@ -29,6 +29,7 @@ namespace ModelConverter {
         List<Rigid> Rigids = new List<Rigid>();
         List<Joint> Joints = new List<Joint>();
 
+        public string FilePath;
         public string ModelName;
         public string ModelNameEng;
         public string Comment;
@@ -139,14 +140,56 @@ namespace ModelConverter {
             public string Text;
 
             public int Vertices;
+
+            public Material(int colorIdx = 0) {
+                Name = "";
+                NameEng = "";
+                
+                float[] col = new float[3];
+                switch (colorIdx % 5) {
+                case 0:
+                    col = new float[] { 0, 0.75f, 0 };
+                    break;
+                case 1:
+                    col = new float[] { 0, 0, 0.75f };
+                    break;
+                case 2:
+                    col = new float[] { 0.75f, 0, 0 };
+                    break;
+                case 3:
+                    col = new float[] { 0, 0.66f, 0.66f };
+                    break;
+                case 4:
+                    col = new float[] { 0.66f, 0.66f, 0 };
+                    break;
+                }
+
+                Diffuse = new float[] { col[0], col[1], col[2], 1 };
+                Specular = new float[] { 1.0f, 1.0f, 1.0f };
+                SpecularPower = 8;
+                Ambient = new float[] { col[0], col[1], col[2] };
+
+                Flag = new DisplayFlag(DisplayFlag.EBoth);
+                EdgeColor = new float[] { 0, 0, 0, 1 };
+                EdgeSize = 1.0f;
+
+                TextureIndex = 0;
+                SphereTextureIndex = 0;
+                SphereMode = SphereMode.None;
+                ToonFlag = false;
+                ToonTextureIndex = 0;
+
+                Text = "";
+                Vertices = 0;
+            }
         }
 
         class DisplayFlag {
-            const byte EBoth = 0x1;
-            const byte EGroundShadow = 0x2;
-            const byte ESelfShadowMap = 0x4;
-            const byte ESelfShadow = 0x8;
-            const byte EEdge = 0x10;
+            public const byte EBoth = 0x1;
+            public const byte EGroundShadow = 0x2;
+            public const byte ESelfShadowMap = 0x4;
+            public const byte ESelfShadow = 0x8;
+            public const byte EEdge = 0x10;
 
             const byte MASK = 0xFF;
 
@@ -1022,6 +1065,8 @@ namespace ModelConverter {
         }
         #endregion
 
+        public MmdPmx() { }
+
         public MmdPmx(string path) {
             var fs = new FileStream(path, FileMode.Open);
             var br = new BinaryReader(fs);
@@ -1040,7 +1085,56 @@ namespace ModelConverter {
             fs.Dispose();
         }
 
+        public override void Load(BaseModel srcModel) {
+            base.Load(srcModel);
+            ToTriangle();
+
+            for (int i = 0; i < mVertList.Count; i++) {
+                var v = mVertList[i];
+                var vert = new Vertex();
+                vert.Vert = v;
+                vert.Norm = new vec3(0, 0, 0);
+                vert.UV = mVertList.Count == mUvList.Count ? mUvList[i] : new float[] { 0, 0 };
+                Vertices.Add(vert);
+            }
+
+            foreach (var o in mObjectList) {
+                foreach (var s in o.Surfaces) {
+                    for (int i = 0; i < s.Indices.Count; i += 3) {
+                        var i0 = s.Indices[i];
+                        var i1 = s.Indices[i + 1];
+                        var i2 = s.Indices[i + 2];
+                        Faces.Add(new int[] { i0.Vert, i1.Vert, i2.Vert });
+                    }
+                }
+            }
+
+            foreach (var o in mObjectList) {
+                var matDic = new Dictionary<string, List<Surface>>();
+                foreach (var s in o.Surfaces) {
+                    if (0 == s.Indices.Count) {
+                        continue;
+                    }
+                    if (!matDic.ContainsKey(s.MaterialName)) {
+                        matDic.Add(s.MaterialName, new List<Surface>());
+                    }
+                    var surfList = matDic[s.MaterialName];
+                    surfList.Add(s);
+                }
+                foreach (var m in matDic) {
+                    var mat = new Material(Materials.Count);
+                    mat.Name = o.Name + "_" + m.Key;
+                    mat.NameEng = mat.Name;
+                    foreach(var s in m.Value) {
+                        mat.Vertices += s.Indices.Count;
+                    }
+                    Materials.Add(mat);
+                }
+            }
+        }
+
         public override void Save(string path) {
+            FilePath = path;
             var fs = new FileStream(path, FileMode.Create);
             var bw = new BinaryWriter(fs);
             writeHeader(bw);
@@ -1104,6 +1198,18 @@ namespace ModelConverter {
         }
 
         void writeModelInfo(BinaryWriter bw) {
+            if (string.IsNullOrEmpty(ModelName)) {
+                ModelName = Path.GetFileNameWithoutExtension(FilePath);
+            }
+            if (string.IsNullOrEmpty(ModelNameEng)) {
+                ModelNameEng = ModelName;
+            }
+            if (null == Comment) {
+                Comment = "";
+            }
+            if (null == CommentEng) {
+                CommentEng = "";
+            }
             var arr = mEnc.GetBytes(ModelName);
             bw.Write(arr.Length);
             bw.Write(arr);

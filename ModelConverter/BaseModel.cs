@@ -86,7 +86,7 @@ abstract class BaseModel {
 
     public abstract void Save(string path);
 
-    public void Load(BaseModel srcModel) {
+    public virtual void Load(BaseModel srcModel) {
         foreach (var m in srcModel.mMaterialList) {
             mMaterialList.Add(m.Key, m.Value);
         }

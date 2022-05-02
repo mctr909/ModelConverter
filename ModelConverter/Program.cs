@@ -93,6 +93,9 @@ namespace ModelConverter {
                 case METASEQUOIA:
                     saveExt = ".mqoz";
                     break;
+                case MMD_PMX:
+                    saveExt = ".pmx";
+                    break;
                 case COLLADA:
                     saveExt = ".dae";
                     break;
@@ -146,6 +149,9 @@ namespace ModelConverter {
                     break;
                 case METASEQUOIA:
                     convertedModel = new Metasequoia();
+                    break;
+                case MMD_PMX:
+                    convertedModel = new MmdPmx();
                     break;
                 case COLLADA:
                     convertedModel = new Collada();
