@@ -54,10 +54,23 @@ abstract class BaseModel {
         }
     }
 
+    protected struct Material {
+        public string Name;
+        public vec3 Diffuse;
+        public vec3 Ambient;
+        public vec3 Specular;
+        public float SpecularPower;
+        public float Alpha;
+        public string TexDiffuse;
+        public string TexAlapha;
+        public string TexBumpMap;
+    }
+
     protected List<Object> mObjectList = new List<Object>();
     protected List<vec3> mVertList = new List<vec3>();
     protected List<vec3> mNormList = new List<vec3>();
     protected List<float[]> mUvList = new List<float[]>();
+    protected List<Material> mMaterialList = new List<Material>();
 
     public bool SwapUV = false;
     public EInvertAxiz InvertAxiz = EInvertAxiz.None;
@@ -72,6 +85,9 @@ abstract class BaseModel {
     public abstract void Save(string path);
 
     public void Load(BaseModel srcModel) {
+        foreach (var m in srcModel.mMaterialList) {
+            mMaterialList.Add(m);
+        }
         foreach (var o in srcModel.mObjectList) {
             mObjectList.Add(o);
         }
@@ -193,12 +209,14 @@ abstract class BaseModel {
             var b2 = a0;
 
             var surfA = new Surface();
+            surfA.MaterialName = surface.MaterialName;
             surfA.Indices.Add(a0);
             surfA.Indices.Add(a1);
             surfA.Indices.Add(a2);
             surfaceList.Add(surfA);
 
             var surfB = new Surface();
+            surfB.MaterialName = surface.MaterialName;
             surfB.Indices.Add(b0);
             surfB.Indices.Add(b1);
             surfB.Indices.Add(b2);
@@ -212,6 +230,7 @@ abstract class BaseModel {
             var a1 = surface.Indices[surface.Indices.Count - 1];
             var a2 = surface.Indices[0];
             var surf = new Surface();
+            surf.MaterialName = surface.MaterialName;
             surf.Indices.Add(a0);
             surf.Indices.Add(a1);
             surf.Indices.Add(a2);
@@ -226,12 +245,14 @@ abstract class BaseModel {
             var b2 = a0;
 
             var surfA = new Surface();
+            surfA.MaterialName = surface.MaterialName;
             surfA.Indices.Add(a0);
             surfA.Indices.Add(a1);
             surfA.Indices.Add(a2);
             surfaceList.Add(surfA);
 
             var surfB = new Surface();
+            surfB.MaterialName = surface.MaterialName;
             surfB.Indices.Add(b0);
             surfB.Indices.Add(b1);
             surfB.Indices.Add(b2);

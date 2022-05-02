@@ -15,23 +15,6 @@ class Metasequoia : BaseModel {
      *   }>
      */
 
-    public struct Material {
-        public string Name;
-        public float R;
-        public float G;
-        public float B;
-        public float A;
-        public float Diffuse;
-        public float Ambient;
-        public float Specular;
-        public float SpecularPower;
-        public string TexturePath;
-        public string AlaphaPlanePath;
-        public string BumpMapPath;
-    }
-
-    public List<Material> MaterialList = new List<Material>();
-
     string mCurrentChunk;
     List<string> mSkipChunks = new List<string> {
         "BackImage",
@@ -159,18 +142,17 @@ class Metasequoia : BaseModel {
                         for (int vi = 1; vi < s.Indices.Count; vi++) {
                             fs.Write(" {0}", convIdxList[s.Indices[vi].Vert]);
                         }
-                        // Todo: M
-                        fs.Write(")");
-                        //fs.Write(") M({0})", f.Material);
-                        // Todo: UV
-                        //if (f.UvList != null && 0 < f.UvList.Count) {
-                        //    fs.Write(" UV(");
-                        //    fs.Write("{0} {1}", f.UvList[0][0], f.UvList[0][1]);
-                        //    for (int iuv = 1; iuv < f.UvList.Count; iuv++) {
-                        //        fs.Write(" {0} {1}", f.UvList[iuv][0], f.UvList[iuv][1]);
-                        //    }
-                        //    fs.Write(")");
-                        //}
+                        fs.Write(") M({0})", s.MaterialName);
+                        if (0 < s.Indices.Count && 0 <= s.Indices[0].Uv) {
+                            fs.Write(" UV(");
+                            var uv = mUvList[s.Indices[0].Uv];
+                            fs.Write("{0} {1}", uv[0], uv[1]);
+                            for (int i = 1; i < s.Indices.Count; i++) {
+                                uv = mUvList[s.Indices[i].Uv];
+                                fs.Write(" {0} {1}", uv[0], uv[1]);
+                            }
+                            fs.Write(")");
+                        }
                         fs.WriteLine();
                     }
                     fs.WriteLine("\t}");
@@ -221,64 +203,66 @@ class Metasequoia : BaseModel {
                     break;
                 case "col": {
                     var color = cols[colIdx + 1].Split(" ");
-                    mat.R = float.Parse(color[0]);
-                    mat.G = float.Parse(color[1]);
-                    mat.B = float.Parse(color[2]);
-                    mat.A = float.Parse(color[3]);
+                    mat.Diffuse = new vec3(
+                        float.Parse(color[0]),
+                        float.Parse(color[1]),
+                        float.Parse(color[2])
+                    );
+                    mat.Alpha = float.Parse(color[3]);
                     break;
                 }
                 case "dif":
-                    mat.Diffuse = float.Parse(cols[colIdx + 1]);
                     break;
                 case "amb":
-                    mat.Ambient = float.Parse(cols[colIdx + 1]);
+                    mat.Ambient = mat.Diffuse * float.Parse(cols[colIdx + 1]);
                     break;
                 case "spc":
-                    mat.Specular = float.Parse(cols[colIdx + 1]);
+                    mat.Specular = mat.Diffuse * float.Parse(cols[colIdx + 1]);
                     break;
                 case "power":
                     mat.SpecularPower = float.Parse(cols[colIdx + 1]);
                     break;
                 case "tex":
-                    mat.TexturePath = cols[colIdx + 1];
+                    mat.TexDiffuse = cols[colIdx + 1];
                     break;
                 case "aplane":
-                    mat.AlaphaPlanePath = cols[colIdx + 1];
+                    mat.TexAlapha = cols[colIdx + 1];
                     break;
                 case "bump":
-                    mat.BumpMapPath = cols[colIdx + 1];
+                    mat.TexBumpMap = cols[colIdx + 1];
                     break;
                 default:
                     break;
                 }
             }
 
-            MaterialList.Add(mat);
+            mMaterialList.Add(mat);
         }
     }
 
     void saveMaterial(StreamWriter fs) {
-        if (MaterialList == null || MaterialList.Count == 0) {
+        if (mMaterialList.Count == 0) {
             return;
         }
-        fs.WriteLine("Material " + MaterialList.Count + " {");
-        foreach (var m in MaterialList) {
+        fs.WriteLine("Material " + mMaterialList.Count + " {");
+        foreach (var m in mMaterialList) {
+            var col = m.Diffuse.Norm;
             fs.Write("\t\"{0}\"", m.Name);
             fs.Write(" shader(3)");
-            fs.Write(" col({0} {1} {2} {3})", m.R, m.G, m.B, m.A);
-            fs.Write(" dif({0})", m.Diffuse);
-            fs.Write(" amb({0})", m.Ambient);
+            fs.Write(" col({0} {1} {2} {3})", col.x, col.y, col.z, m.Alpha);
+            fs.Write(" dif({0})", m.Diffuse.Abs);
+            fs.Write(" amb({0})", m.Ambient.Abs);
             fs.Write(" emi(0)");
-            fs.Write(" spe({0})", m.Specular);
+            fs.Write(" spe({0})", m.Specular.Abs);
             fs.Write(" power({0})", m.SpecularPower);
-            if (!string.IsNullOrEmpty(m.TexturePath)) {
-                fs.Write(" tex({0})", m.TexturePath);
+            if (!string.IsNullOrEmpty(m.TexDiffuse)) {
+                fs.Write(" tex({0})", m.TexDiffuse);
             }
-            if (!string.IsNullOrEmpty(m.AlaphaPlanePath)) {
-                fs.Write(" aplane({0})", m.AlaphaPlanePath);
+            if (!string.IsNullOrEmpty(m.TexAlapha)) {
+                fs.Write(" aplane({0})", m.TexAlapha);
             }
-            if (!string.IsNullOrEmpty(m.BumpMapPath)) {
-                fs.Write(" bump({0})", m.BumpMapPath);
+            if (!string.IsNullOrEmpty(m.TexBumpMap)) {
+                fs.Write(" bump({0})", m.TexBumpMap);
             }
             fs.WriteLine();
         }
@@ -381,6 +365,8 @@ class Metasequoia : BaseModel {
             var vertexCountEnd = line.IndexOf(" ");
 
             // Attribute
+            var vertIdx = new List<int>();
+            var uvIdx = new List<int>();
             var cols = line.Substring(vertexCountEnd).Replace(")", "(").Split("(");
             for (int colIdx = 0; colIdx < cols.Length; colIdx += 2) {
                 var type = cols[colIdx].Trim();
@@ -388,27 +374,36 @@ class Metasequoia : BaseModel {
                 case "V": {
                     var indexes = cols[colIdx + 1].Split(" ");
                     foreach (var str in indexes) {
-                        surface.Indices.Add(new Index(idxOfs + int.Parse(str)));
+                        vertIdx.Add(idxOfs + int.Parse(str));
                     }
                     break;
                 }
-                //Todo:M
-                //case "M":
-                //    surface.Material = int.Parse(cols[colIdx + 1]);
-                //    break;
-                //Todo:UV
-                //case "UV": {
-                //    var uv = cols[colIdx + 1].Split(" ");
-                //    for (int i = 0; i < uv.Length; i += 2) {
-                //        surface.UvList.Add(new float[] { float.Parse(uv[i]), float.Parse(uv[i + 1]) });
-                //    }
-                //    break;
-                //}
+                case "M":
+                    surface.MaterialName = mMaterialList[int.Parse(cols[colIdx + 1])].Name;
+                    break;
+                case "UV": {
+                    var uv = cols[colIdx + 1].Split(" ");
+                    for (int i = 0; i < uv.Length; i += 2) {
+                        uvIdx.Add(mUvList.Count);
+                        mUvList.Add(new float[] { float.Parse(uv[i]), float.Parse(uv[i + 1]) });
+                    }
+                    break;
+                }
                 case "COL":
                 case "CRS":
                     break;
                 default:
                     break;
+                }
+            }
+
+            if (uvIdx.Count == vertIdx.Count) {
+                for (int i = 0; i < vertIdx.Count; i++) {
+                    surface.Indices.Add(new Index(vertIdx[i], uvIdx[i]));
+                }
+            } else {
+                for (int i = 0; i < vertIdx.Count; i++) {
+                    surface.Indices.Add(new Index(vertIdx[i]));
                 }
             }
 

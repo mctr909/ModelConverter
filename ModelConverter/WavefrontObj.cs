@@ -1,23 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 
 class WavefrontObj : BaseModel {
-    public struct Material {
-        public string Name;
-        public vec3 Diffuse;
-        public vec3 Ambient;
-        public vec3 Specular;
-        public float SpecularPower;
-        public float Alpha;
-        public Texture TexDiffuse;
-        public Texture TexAmbient;
-        public Texture TexSpecular;
-        public Texture TexSpecularPower;
-        public Texture TexAlapha;
-        public Texture TexBumpMap;
-    }
-
     public class Texture {
         public string FileName;
         public vec3 Offset = new vec3();
@@ -174,8 +158,6 @@ class WavefrontObj : BaseModel {
             fs.WriteLine(" " + FileName.Replace("\"", ""));
         }
     }
-
-    public List<Material> MaterialList = new List<Material>();
 
     public WavefrontObj() { }
 
@@ -357,6 +339,7 @@ class WavefrontObj : BaseModel {
         }
 
         using (var fs = new StreamReader(path + "\\" + fileName)) {
+            Texture tex;
             var material = new Material();
             while (!fs.EndOfStream) {
                 var line = fs.ReadLine().Replace("\t", " ").TrimStart();
@@ -368,7 +351,7 @@ class WavefrontObj : BaseModel {
                 switch (cols[0]) {
                 case "newmtl":
                     if (!string.IsNullOrEmpty(material.Name)) {
-                        MaterialList.Add(material);
+                        mMaterialList.Add(material);
                     }
                     material = new Material();
                     material.Name = cols[1].Replace("\"", "");
@@ -398,62 +381,49 @@ class WavefrontObj : BaseModel {
                     break;
 
                 case "map_Ka":
-                    material.TexAmbient = new Texture(cols);
                     break;
                 case "map_Kd":
-                    material.TexDiffuse = new Texture(cols);
+                    tex = new Texture(cols);
+                    material.TexDiffuse = tex.FileName;
                     break;
                 case "map_Ks":
-                    material.TexSpecular = new Texture(cols);
                     break;
                 case "map_Ns":
-                    material.TexSpecularPower = new Texture(cols);
                     break;
                 case "map_d":
-                    material.TexAlapha = new Texture(cols);
+                    tex = new Texture(cols);
+                    material.TexAlapha = tex.FileName;
                     break;
                 case "map_bump":
                 case "bump":
-                    material.TexBumpMap = new Texture(cols);
+                    tex = new Texture(cols);
+                    material.TexBumpMap = tex.FileName;
                     break;
                 }
             }
             if (!string.IsNullOrEmpty(material.Name)) {
-                MaterialList.Add(material);
+                mMaterialList.Add(material);
             }
         }
     }
 
     void saveMaterial(string path) {
-        if (MaterialList.Count == 0) {
+        if (mMaterialList.Count == 0) {
             return;
         }
 
         using(var fs = new StreamWriter(path)) {
-            foreach(var m in MaterialList) {
+            foreach(var m in mMaterialList) {
                 fs.WriteLine("newmtl {0}", m.Name.Replace("\"", ""));
-                fs.WriteLine("\tKd 1.0 1.0 1.0");
-                fs.WriteLine("\tKa 0.8 0.8 0.8");
                 fs.WriteLine("\tNs 5");
-                if (null != m.TexDiffuse) {
-                    fs.Write("\tmap_Kd");
-                    m.TexDiffuse.Write(fs);
-                }
-                //fs.WriteLine("\tKd {0} {1} {2}", m.Diffuse.x, m.Diffuse.y, m.Diffuse.z);
-                //fs.WriteLine("\tKa {0} {1} {2}", m.Ambient.x, m.Ambient.y, m.Ambient.z);
-                //fs.WriteLine("\tKs {0} {1} {2}", m.Specular.x, m.Specular.y, m.Specular.z);
-                //fs.WriteLine("\td {0}", m.Alpha);
-                //if (null != m.TexAmbient) {
-                //    fs.Write("\tmap_Ka");
-                //    m.TexAmbient.Write(fs);
-                //}
-                //if (null != m.TexSpecular) {
-                //    fs.Write("\tmap_Ks");
-                //    m.TexSpecular.Write(fs);
-                //}
-                //if (null != m.TexSpecularPower) {
-                //    fs.Write("\tmap_Ns");
-                //    m.TexSpecularPower.Write(fs);
+                fs.WriteLine("\tKd {0} {1} {2}", m.Diffuse.x, m.Diffuse.y, m.Diffuse.z);
+                fs.WriteLine("\tKa {0} {1} {2}", m.Ambient.x, m.Ambient.y, m.Ambient.z);
+                fs.WriteLine("\tKs {0} {1} {2}", m.Specular.x, m.Specular.y, m.Specular.z);
+                fs.WriteLine("\td {0}", m.Alpha);
+                // Todo: tex
+                //if (null != m.TexDiffuse) {
+                //    fs.Write("\tmap_Kd");
+                //    m.TexDiffuse.Write(fs);
                 //}
                 //if (null != m.TexAlapha) {
                 //    fs.Write("\tmap_d");
