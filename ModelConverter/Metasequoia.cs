@@ -5,17 +5,6 @@ using System.IO;
 using System.IO.Compression;
 
 class Metasequoia : BaseModel {
-    /*
-     * Object
-     *   Name : string
-     *   Vertex : Array<vec3>
-     *   Surface : Array<{
-     *     VertexIndex : Array<int>
-     *     UV : Array<float[]>
-     *     Material : int
-     *   }>
-     */
-
     string mCurrentChunk;
     List<string> mSkipChunks = new List<string> {
         "BackImage",
@@ -87,11 +76,6 @@ class Metasequoia : BaseModel {
     }
 
     public override void Save(string path) {
-        var materialNameDic = new Dictionary<string, int>();
-        foreach (var n in mMaterialList) {
-            materialNameDic.Add(n.Key, materialNameDic.Count);
-        }
-
         var fileName = Path.GetFileNameWithoutExtension(path);
         var textFilePath = AppContext.BaseDirectory + fileName;
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
@@ -99,7 +83,7 @@ class Metasequoia : BaseModel {
             fs.WriteLine("Metasequoia Document");
             fs.WriteLine("Format Text Ver 1.1");
             fs.WriteLine();
-            saveMaterial(fs);
+            writeMaterial(fs);
             foreach (var obj in mObjectList) {
                 fs.WriteLine("Object \"" + obj.Name + "\" {");
                 fs.WriteLine("\tdepth 0");
@@ -114,85 +98,7 @@ class Metasequoia : BaseModel {
                 fs.WriteLine("\tnormal_weight 1");
                 fs.WriteLine("\tcolor 0.5 0.5 0.5");
                 fs.WriteLine("\tcolor_type 0");
-                // Vertex
-                var convIdxList = new Dictionary<int, int>();
-                {
-                    var count = 0;
-                    foreach (var s in obj.Surfaces) {
-                        foreach (var idx in s.Indices) {
-                            if (!convIdxList.ContainsKey(idx.Vert)) {
-                                count++;
-                                convIdxList.Add(idx.Vert, convIdxList.Count);
-                            }
-                        }
-                        foreach (var idx in s.Line) {
-                            if (!convIdxList.ContainsKey(idx)) {
-                                count++;
-                                convIdxList.Add(idx, convIdxList.Count);
-                            }
-                        }
-                    }
-                    convIdxList.Clear();
-                    fs.WriteLine("\tvertex " + count + " {");
-                    foreach (var s in obj.Surfaces) {
-                        foreach (var idx in s.Indices) {
-                            if (!convIdxList.ContainsKey(idx.Vert)) {
-                                var v = mVertList[idx.Vert];
-                                fs.WriteLine("\t\t{0} {1} {2}", v.x, v.y, v.z);
-                                convIdxList.Add(idx.Vert, convIdxList.Count);
-                            }
-                        }
-                        foreach (var idx in s.Line) {
-                            if (!convIdxList.ContainsKey(idx)) {
-                                var v = mVertList[idx];
-                                fs.WriteLine("\t\t{0} {1} {2}", v.x, v.y, v.z);
-                                convIdxList.Add(idx, convIdxList.Count);
-                            }
-                        }
-                    }
-                    fs.WriteLine("\t}");
-                }
-                // Face
-                {
-                    fs.WriteLine("\tface " + obj.Surfaces.Count + " {");
-                    foreach (var s in obj.Surfaces) {
-                        // V(surface)
-                        if (0 < s.Indices.Count) {
-                            fs.Write("\t\t {0} V(", s.Indices.Count);
-                            fs.Write("{0}", convIdxList[s.Indices[0].Vert]);
-                            for (int vi = 1; vi < s.Indices.Count; vi++) {
-                                fs.Write(" {0}", convIdxList[s.Indices[vi].Vert]);
-                            }
-                            fs.Write(")");
-                        }
-                        // V(line)
-                        if (0 < s.Line.Count) {
-                            fs.Write("\t\t {0} V(", s.Line.Count);
-                            fs.Write("{0}", convIdxList[s.Line[0]]);
-                            for (int vi = 1; vi < s.Line.Count; vi++) {
-                                fs.Write(" {0}", convIdxList[s.Line[vi]]);
-                            }
-                            fs.Write(")");
-                        }
-                        // M
-                        if (materialNameDic.ContainsKey(s.MaterialName)) {
-                            fs.Write(" M({0})", materialNameDic[s.MaterialName]);
-                        }
-                        // UV
-                        if (0 < s.Indices.Count && 0 <= s.Indices[0].Uv) {
-                            fs.Write(" UV(");
-                            var uv = mUvList[s.Indices[0].Uv];
-                            fs.Write("{0} {1}", uv[0], uv[1]);
-                            for (int i = 1; i < s.Indices.Count; i++) {
-                                uv = mUvList[s.Indices[i].Uv];
-                                fs.Write(" {0} {1}", uv[0], uv[1]);
-                            }
-                            fs.Write(")");
-                        }
-                        fs.WriteLine();
-                    }
-                    fs.WriteLine("\t}");
-                }
+                writeFace(fs, obj);
                 fs.WriteLine("}");
             }
         }
@@ -200,7 +106,6 @@ class Metasequoia : BaseModel {
         using (var z = ZipFile.Open(path, ZipArchiveMode.Create)) {
             z.CreateEntryFromFile(textFilePath, fileName + ".mqo");
         }
-
         File.Delete(textFilePath);
     }
 
@@ -276,7 +181,7 @@ class Metasequoia : BaseModel {
         }
     }
 
-    void saveMaterial(StreamWriter fs) {
+    void writeMaterial(StreamWriter fs) {
         if (mMaterialList.Count == 0) {
             return;
         }
@@ -456,5 +361,90 @@ class Metasequoia : BaseModel {
 
             obj.Surfaces.Add(surface);
         }
+    }
+
+    void writeFace(StreamWriter fs, Object obj) {
+        var matNameToIdx = new Dictionary<string, int>();
+        foreach (var n in mMaterialList) {
+            matNameToIdx.Add(n.Key, matNameToIdx.Count);
+        }
+
+        var count = 0;
+        var convIdxList = new Dictionary<int, int>();
+        foreach (var s in obj.Surfaces) {
+            foreach (var idx in s.Indices) {
+                if (!convIdxList.ContainsKey(idx.Vert)) {
+                    count++;
+                    convIdxList.Add(idx.Vert, convIdxList.Count);
+                }
+            }
+            foreach (var idx in s.Line) {
+                if (!convIdxList.ContainsKey(idx)) {
+                    count++;
+                    convIdxList.Add(idx, convIdxList.Count);
+                }
+            }
+        }
+
+        // Vertex
+        convIdxList.Clear();
+        fs.WriteLine("\tvertex " + count + " {");
+        foreach (var s in obj.Surfaces) {
+            foreach (var idx in s.Indices) {
+                if (!convIdxList.ContainsKey(idx.Vert)) {
+                    var v = mVertList[idx.Vert];
+                    fs.WriteLine("\t\t{0} {1} {2}", v.x, v.y, v.z);
+                    convIdxList.Add(idx.Vert, convIdxList.Count);
+                }
+            }
+            foreach (var idx in s.Line) {
+                if (!convIdxList.ContainsKey(idx)) {
+                    var v = mVertList[idx];
+                    fs.WriteLine("\t\t{0} {1} {2}", v.x, v.y, v.z);
+                    convIdxList.Add(idx, convIdxList.Count);
+                }
+            }
+        }
+        fs.WriteLine("\t}");
+
+        // Face
+        fs.WriteLine("\tface " + obj.Surfaces.Count + " {");
+        foreach (var s in obj.Surfaces) {
+            // V(surface)
+            if (0 < s.Indices.Count) {
+                fs.Write("\t\t {0} V(", s.Indices.Count);
+                fs.Write("{0}", convIdxList[s.Indices[0].Vert]);
+                for (int vi = 1; vi < s.Indices.Count; vi++) {
+                    fs.Write(" {0}", convIdxList[s.Indices[vi].Vert]);
+                }
+                fs.Write(")");
+            }
+            // V(line)
+            if (0 < s.Line.Count) {
+                fs.Write("\t\t {0} V(", s.Line.Count);
+                fs.Write("{0}", convIdxList[s.Line[0]]);
+                for (int vi = 1; vi < s.Line.Count; vi++) {
+                    fs.Write(" {0}", convIdxList[s.Line[vi]]);
+                }
+                fs.Write(")");
+            }
+            // M
+            if (matNameToIdx.ContainsKey(s.MaterialName)) {
+                fs.Write(" M({0})", matNameToIdx[s.MaterialName]);
+            }
+            // UV
+            if (0 < s.Indices.Count && 0 <= s.Indices[0].Uv) {
+                fs.Write(" UV(");
+                var uv = mUvList[s.Indices[0].Uv];
+                fs.Write("{0} {1}", uv[0], uv[1]);
+                for (int i = 1; i < s.Indices.Count; i++) {
+                    uv = mUvList[s.Indices[i].Uv];
+                    fs.Write(" {0} {1}", uv[0], uv[1]);
+                }
+                fs.Write(")");
+            }
+            fs.WriteLine();
+        }
+        fs.WriteLine("\t}");
     }
 }
