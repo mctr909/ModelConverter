@@ -1122,13 +1122,21 @@ namespace ModelConverter {
                     surfList.Add(s);
                 }
                 foreach (var m in matDic) {
-                    var mat = new Material(Materials.Count);
-                    mat.Name = o.Name + "_" + m.Key;
-                    mat.NameEng = mat.Name;
-                    foreach(var s in m.Value) {
-                        mat.Vertices += s.Indices.Count;
+                    var matList = m.Value;
+                    var tmpMat = new Material(Materials.Count);
+                    tmpMat.Name = o.Name + "_" + m.Key;
+                    tmpMat.NameEng = tmpMat.Name;
+                    if (mMaterialList.ContainsKey(matList[0].MaterialName)) {
+                        var mat = mMaterialList[matList[0].MaterialName];
+                        tmpMat.Diffuse = new float[] { mat.Diffuse.x, mat.Diffuse.y, mat.Diffuse.z, mat.Alpha };
+                        tmpMat.Ambient = new float[] { mat.Ambient.x, mat.Ambient.y, mat.Ambient.z };
+                        tmpMat.Specular = new float[] { mat.Specular.x, mat.Specular.y, mat.Specular.z };
+                        tmpMat.SpecularPower = mat.SpecularPower;
                     }
-                    Materials.Add(mat);
+                    foreach (var s in matList) {
+                        tmpMat.Vertices += s.Indices.Count;
+                    }
+                    Materials.Add(tmpMat);
                 }
             }
         }
