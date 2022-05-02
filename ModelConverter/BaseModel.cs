@@ -132,6 +132,21 @@ abstract class BaseModel {
         }
     }
 
+    public void Reverse() {
+        for (int io = 0; io < mObjectList.Count; io++) {
+            var o = mObjectList[io];
+            for (int isurf = 0; isurf < o.Surfaces.Count; isurf++) {
+                var s = o.Surfaces[isurf];
+                var tmpIdxList = new List<Index>();
+                for (int i = s.Indices.Count - 1; 0 <= i; i--) {
+                    tmpIdxList.Add(s.Indices[i]);
+                }
+                s.Indices.Clear();
+                s.Indices.AddRange(tmpIdxList);
+            }
+        }
+    }
+
     public void TransformUV() {
         switch (InvertUV) {
         case EInvertUV.None:

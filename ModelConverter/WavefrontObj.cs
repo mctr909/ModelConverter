@@ -297,9 +297,12 @@ class WavefrontObj : BaseModel {
                 mObjectList.Add(curObject);
             }
         }
+
+        Reverse();
     }
 
     public override void Save(string path) {
+        Reverse();
         ToTriangle();
 
         // Material
