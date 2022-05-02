@@ -255,7 +255,7 @@ class WavefrontObj : BaseModel {
                                 Console.ReadKey();
                                 return;
                             }
-                            s.VertIdx.Add(vertexIdx - 1);
+                            s.Indices.Add(new Index(vertexIdx - 1));
                             break;
                         case 2:
                             if (!int.TryParse(fcols[0], out vertexIdx)) {
@@ -268,8 +268,7 @@ class WavefrontObj : BaseModel {
                                 Console.ReadKey();
                                 return;
                             }
-                            s.VertIdx.Add(vertexIdx - 1);
-                            s.UvIdx.Add(uvIdx - 1);
+                            s.Indices.Add(new Index(vertexIdx - 1, uvIdx - 1));
                             break;
                         case 3:
                             if ("" == fcols[1]) {
@@ -278,7 +277,7 @@ class WavefrontObj : BaseModel {
                                     Console.ReadKey();
                                     return;
                                 }
-                                s.VertIdx.Add(vertexIdx - 1);
+                                s.Indices.Add(new Index(vertexIdx - 1));
                             } else {
                                 if (!int.TryParse(fcols[0], out vertexIdx)) {
                                     Console.WriteLine("頂点インデックスエラー velue\"{0}\"\n\"{1}\"", fcols[0], line);
@@ -290,8 +289,7 @@ class WavefrontObj : BaseModel {
                                     Console.ReadKey();
                                     return;
                                 }
-                                s.VertIdx.Add(vertexIdx - 1);
-                                s.UvIdx.Add(uvIdx - 1);
+                                s.Indices.Add(new Index(vertexIdx - 1, uvIdx - 1));
                             }
                             break;
                         }
@@ -361,13 +359,13 @@ class WavefrontObj : BaseModel {
                     curMaterial = s.MaterialName;
                 }
                 fs.Write("f");
-                if (0 < s.UvIdx.Count) {
-                    for (int i = 0; i < s.VertIdx.Count; i++) {
-                        fs.Write(" {0}/{1}", s.VertIdx[i] + 1, s.UvIdx[i] + 1);
+                if (0 < s.Indices.Count && 0 <= s.Indices[0].Uv) {
+                    for (int i = 0; i < s.Indices.Count; i++) {
+                        fs.Write(" {0}/{1}", s.Indices[i].Vert + 1, s.Indices[i].Uv + 1);
                     }
                 } else {
-                    for (int i = 0; i < s.VertIdx.Count; i++) {
-                        fs.Write(" {0}", s.VertIdx[i] + 1);
+                    for (int i = 0; i < s.Indices.Count; i++) {
+                        fs.Write(" {0}", s.Indices[i].Vert + 1);
                     }
                 }
                 fs.WriteLine();

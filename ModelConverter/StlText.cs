@@ -7,7 +7,6 @@ class StlText : BaseModel {
         var curSurface = new Surface();
         var curObject = new Object();
         var curNorm = 0;
-
         using (var fs = new StreamReader(path)) {
             while (!fs.EndOfStream) {
                 var line = fs.ReadLine().Replace("\t", " ").TrimStart().Replace("  ", " ");
@@ -34,8 +33,10 @@ class StlText : BaseModel {
                 case "outer":
                     break;
                 case "vertex": {
-                    curSurface.VertIdx.Add(mVertList.Count);
-                    curSurface.NormIdx.Add(curNorm);
+                    var idx = new Index();
+                    idx.Vert = mVertList.Count;
+                    idx.Norm = curNorm;
+                    curSurface.Indices.Add(idx);
                     var v = new vec3(float.Parse(cols[1]), float.Parse(cols[2]), float.Parse(cols[3]));
                     mVertList.Add(v);
                     break;
@@ -63,15 +64,17 @@ class StlText : BaseModel {
             fs.WriteLine("solid {0}", obj.Name);
             foreach (var s in obj.Surfaces) {
                 var nn = new vec3();
-                foreach (var ni in s.NormIdx) {
-                    var n = mNormList[ni];
-                    nn += n;
+                foreach (var idx in s.Indices) {
+                    if (0 <= idx.Norm) {
+                        var n = mNormList[idx.Norm];
+                        nn += n;
+                    }
                 }
                 nn.Normalize();
                 fs.WriteLine("\tfacet normal {0} {1} {2}", nn.x, nn.y, nn.z);
                 fs.WriteLine("\t\touter loop");
-                foreach (var vi in s.VertIdx) {
-                    var v = mVertList[vi];
+                foreach (var idx in s.Indices) {
+                    var v = mVertList[idx.Vert];
                     fs.WriteLine("\t\t\tvertex {0} {1} {2}", v.x, v.y, v.z);
                 }
                 fs.WriteLine("\t\tendloop");

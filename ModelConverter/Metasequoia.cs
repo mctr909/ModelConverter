@@ -129,21 +129,21 @@ class Metasequoia : BaseModel {
                 {
                     var count = 0;
                     foreach (var s in obj.Surfaces) {
-                        foreach (var vi in s.VertIdx) {
-                            if (!convIdxList.ContainsKey(vi)) {
+                        foreach (var idx in s.Indices) {
+                            if (!convIdxList.ContainsKey(idx.Vert)) {
                                 count++;
-                                convIdxList.Add(vi, convIdxList.Count);
+                                convIdxList.Add(idx.Vert, convIdxList.Count);
                             }
                         }
                     }
                     convIdxList.Clear();
                     fs.WriteLine("\tvertex " + count + " {");
                     foreach (var s in obj.Surfaces) {
-                        foreach (var vi in s.VertIdx) {
-                            if (!convIdxList.ContainsKey(vi)) {
-                                var v = mVertList[vi];
+                        foreach (var idx in s.Indices) {
+                            if (!convIdxList.ContainsKey(idx.Vert)) {
+                                var v = mVertList[idx.Vert];
                                 fs.WriteLine("\t\t{0} {1} {2}", v.x, v.y, v.z);
-                                convIdxList.Add(vi, convIdxList.Count);
+                                convIdxList.Add(idx.Vert, convIdxList.Count);
                             }
                         }
                     }
@@ -154,10 +154,10 @@ class Metasequoia : BaseModel {
                     fs.WriteLine("\tface " + obj.Surfaces.Count + " {");
                     foreach (var s in obj.Surfaces) {
                         // V
-                        fs.Write("\t\t {0} V(", s.VertIdx.Count);
-                        fs.Write("{0}", convIdxList[s.VertIdx[0]]);
-                        for (int vi = 1; vi < s.VertIdx.Count; vi++) {
-                            fs.Write(" {0}", convIdxList[s.VertIdx[vi]]);
+                        fs.Write("\t\t {0} V(", s.Indices.Count);
+                        fs.Write("{0}", convIdxList[s.Indices[0].Vert]);
+                        for (int vi = 1; vi < s.Indices.Count; vi++) {
+                            fs.Write(" {0}", convIdxList[s.Indices[vi].Vert]);
                         }
                         // Todo: M
                         fs.Write(")");
@@ -387,8 +387,8 @@ class Metasequoia : BaseModel {
                 switch (type) {
                 case "V": {
                     var indexes = cols[colIdx + 1].Split(" ");
-                    foreach (var idx in indexes) {
-                        surface.VertIdx.Add(idxOfs + int.Parse(idx));
+                    foreach (var str in indexes) {
+                        surface.Indices.Add(new Index(idxOfs + int.Parse(str)));
                     }
                     break;
                 }

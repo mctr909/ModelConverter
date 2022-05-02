@@ -30,8 +30,9 @@ class StlBin : BaseModel {
                     mNormList.Add(new vec3(x, y, z));
 
                     // Vartex 1
-                    curSurface.VertIdx.Add(mVertList.Count);
-                    curSurface.NormIdx.Add(curNorm);
+                    var idx = new Index();
+                    idx.Vert = mVertList.Count;
+                    idx.Norm = curNorm;
                     fs.Read(arrFloat);
                     x = BitConverter.ToSingle(arrFloat);
                     fs.Read(arrFloat);
@@ -39,10 +40,12 @@ class StlBin : BaseModel {
                     fs.Read(arrFloat);
                     z = BitConverter.ToSingle(arrFloat);
                     mVertList.Add(new vec3(x, y, z));
+                    curSurface.Indices.Add(idx);
 
                     // Vartex 2
-                    curSurface.VertIdx.Add(mVertList.Count);
-                    curSurface.NormIdx.Add(curNorm);
+                    idx = new Index();
+                    idx.Vert = mVertList.Count;
+                    idx.Norm = curNorm;
                     fs.Read(arrFloat);
                     x = BitConverter.ToSingle(arrFloat);
                     fs.Read(arrFloat);
@@ -50,10 +53,12 @@ class StlBin : BaseModel {
                     fs.Read(arrFloat);
                     z = BitConverter.ToSingle(arrFloat);
                     mVertList.Add(new vec3(x, y, z));
+                    curSurface.Indices.Add(idx);
 
                     // Vartex 3
-                    curSurface.VertIdx.Add(mVertList.Count);
-                    curSurface.NormIdx.Add(curNorm);
+                    idx = new Index();
+                    idx.Vert = mVertList.Count;
+                    idx.Norm = curNorm;
                     fs.Read(arrFloat);
                     x = BitConverter.ToSingle(arrFloat);
                     fs.Read(arrFloat);
@@ -61,6 +66,7 @@ class StlBin : BaseModel {
                     fs.Read(arrFloat);
                     z = BitConverter.ToSingle(arrFloat);
                     mVertList.Add(new vec3(x, y, z));
+                    curSurface.Indices.Add(idx);
 
                     // Reserved
                     fs.Read(arrReserved);
@@ -88,16 +94,19 @@ class StlBin : BaseModel {
             foreach (var s in obj.Surfaces) {
                 // Normal
                 var nn = new vec3();
-                foreach (var ni in s.NormIdx) {
-                    var n = mNormList[ni];
-                    nn += n;
+                foreach (var idx in s.Indices) {
+                    if (0 <= idx.Norm) {
+                        var n = mNormList[idx.Norm];
+                        nn += n;
+                    }
                 }
+                nn.Normalize();
                 fs.Write(BitConverter.GetBytes(nn.x));
                 fs.Write(BitConverter.GetBytes(nn.y));
                 fs.Write(BitConverter.GetBytes(nn.z));
                 // Vertex
-                foreach (var vi in s.VertIdx) {
-                    var v = mVertList[vi];
+                foreach (var idx in s.Indices) {
+                    var v = mVertList[idx.Vert];
                     fs.Write(BitConverter.GetBytes(v.x));
                     fs.Write(BitConverter.GetBytes(v.y));
                     fs.Write(BitConverter.GetBytes(v.z));

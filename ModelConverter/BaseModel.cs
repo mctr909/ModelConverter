@@ -24,20 +24,27 @@ abstract class BaseModel {
         V = 2
     }
 
-    public struct Surface {
-        public string MaterialName;
-        public List<int> VertIdx;
-        public List<int> NormIdx;
-        public List<int> UvIdx;
-        public Surface() {
-            MaterialName = "";
-            VertIdx = new List<int>();
-            NormIdx = new List<int>();
-            UvIdx = new List<int>();
+    protected struct Index {
+        public int Vert;
+        public int Norm;
+        public int Uv;
+        public Index(int vert = -1, int uv = -1, int norm = -1) {
+            Vert = vert;
+            Norm = norm;
+            Uv = uv;
         }
     }
 
-    public struct Object {
+    protected struct Surface {
+        public string MaterialName;
+        public List<Index> Indices;
+        public Surface() {
+            MaterialName = "";
+            Indices = new List<Index>();
+        }
+    }
+
+    protected struct Object {
         public string Name;
         public List<Surface> Surfaces;
         public Object() {
@@ -134,7 +141,7 @@ abstract class BaseModel {
             var obj = mObjectList[j];
             var surfaceList = new List<Surface>();
             foreach (var s in obj.Surfaces) {
-                if (s.VertIdx.Count % 2 == 0) {
+                if (s.Indices.Count % 2 == 0) {
                     evenPoligon(surfaceList, s);
                 } else {
                     oddPoligon(surfaceList, s);
@@ -148,129 +155,57 @@ abstract class BaseModel {
     }
 
     void evenPoligon(List<Surface> surfaceList, Surface surface) {
-        for (int i = 0; i < surface.VertIdx.Count / 2 - 1; i++) {
-            var surfA = new Surface();
-            var surfB = new Surface();
-            var a0 = i;
-            var a1 = i + 1;
-            var a2 = surface.VertIdx.Count - i - 2;
+        for (int i = 0; i < surface.Indices.Count / 2 - 1; i++) {
+            var a0 = surface.Indices[i];
+            var a1 = surface.Indices[i + 1];
+            var a2 = surface.Indices[surface.Indices.Count - i - 2];
             var b0 = a2;
-            var b1 = surface.VertIdx.Count - i - 1;
+            var b1 = surface.Indices[surface.Indices.Count - i - 1];
             var b2 = a0;
 
-            surfA.VertIdx = new List<int> {
-                surface.VertIdx[a0],
-                surface.VertIdx[a1],
-                surface.VertIdx[a2]
-            };
-            surfB.VertIdx = new List<int> {
-                surface.VertIdx[b0],
-                surface.VertIdx[b1],
-                surface.VertIdx[b2]
-            };
-            if (surface.NormIdx.Count == surface.VertIdx.Count) {
-                surfA.NormIdx = new List<int> {
-                    surface.NormIdx[a0],
-                    surface.NormIdx[a1],
-                    surface.NormIdx[a2]
-                };
-                surfB.NormIdx = new List<int> {
-                    surface.NormIdx[b0],
-                    surface.NormIdx[b1],
-                    surface.NormIdx[b2]
-                };
-            }
-            if (surface.UvIdx.Count == surface.VertIdx.Count) {
-                surfA.UvIdx = new List<int> {
-                    surface.UvIdx[a0],
-                    surface.UvIdx[a1],
-                    surface.UvIdx[a2]
-                };
-                surfB.UvIdx = new List<int> {
-                    surface.UvIdx[b0],
-                    surface.UvIdx[b1],
-                    surface.UvIdx[b2]
-                };
-            }
-
+            var surfA = new Surface();
+            surfA.Indices.Add(a0);
+            surfA.Indices.Add(a1);
+            surfA.Indices.Add(a2);
             surfaceList.Add(surfA);
+
+            var surfB = new Surface();
+            surfB.Indices.Add(b0);
+            surfB.Indices.Add(b1);
+            surfB.Indices.Add(b2);
             surfaceList.Add(surfB);
         }
     }
 
     void oddPoligon(List<Surface> surfaceList, Surface surface) {
         {
-            var a0 = surface.VertIdx.Count - 2;
-            var a1 = surface.VertIdx.Count - 1;
-            var a2 = 0;
+            var a0 = surface.Indices[surface.Indices.Count - 2];
+            var a1 = surface.Indices[surface.Indices.Count - 1];
+            var a2 = surface.Indices[0];
             var surf = new Surface();
-            surf.VertIdx = new List<int> {
-                surface.VertIdx[a0],
-                surface.VertIdx[a1],
-                surface.VertIdx[a2]
-            };
-            if (surface.NormIdx.Count == surface.VertIdx.Count) {
-                surf.NormIdx = new List<int> {
-                    surface.NormIdx[a0],
-                    surface.NormIdx[a1],
-                    surface.NormIdx[a2]
-                };
-            }
-            if (surface.UvIdx.Count == surface.VertIdx.Count) {
-                surf.UvIdx = new List<int> {
-                    surface.UvIdx[a0],
-                    surface.UvIdx[a1],
-                    surface.UvIdx[a2]
-                };
-            }
+            surf.Indices.Add(a0);
+            surf.Indices.Add(a1);
+            surf.Indices.Add(a2);
             surfaceList.Add(surf);
         }
-        for (int i = 0; i < surface.VertIdx.Count / 2 - 1; i++) {
-            var surfA = new Surface();
-            var surfB = new Surface();
-            var a0 = i;
-            var a1 = i + 1;
-            var a2 = surface.VertIdx.Count - i - 3;
+        for (int i = 0; i < surface.Indices.Count / 2 - 1; i++) {
+            var a0 = surface.Indices[i];
+            var a1 = surface.Indices[i + 1];
+            var a2 = surface.Indices[surface.Indices.Count - i - 3];
             var b0 = a2;
-            var b1 = surface.VertIdx.Count - i - 2;
+            var b1 = surface.Indices[surface.Indices.Count - i - 2];
             var b2 = a0;
 
-            surfA.VertIdx = new List<int> {
-                surface.VertIdx[a0],
-                surface.VertIdx[a1],
-                surface.VertIdx[a2]
-            };
-            surfB.VertIdx = new List<int> {
-                surface.VertIdx[b0],
-                surface.VertIdx[b1],
-                surface.VertIdx[b2]
-            };
-            if (surface.NormIdx.Count == surface.VertIdx.Count) {
-                surfA.NormIdx = new List<int> {
-                    surface.NormIdx[a0],
-                    surface.NormIdx[a1],
-                    surface.NormIdx[a2]
-                };
-                surfB.NormIdx = new List<int> {
-                    surface.NormIdx[b0],
-                    surface.NormIdx[b1],
-                    surface.NormIdx[b2]
-                };
-            }
-            if (surface.UvIdx.Count == surface.VertIdx.Count) {
-                surfA.UvIdx = new List<int> {
-                    surface.UvIdx[a0],
-                    surface.UvIdx[a1],
-                    surface.UvIdx[a2]
-                };
-                surfB.UvIdx = new List<int> {
-                    surface.UvIdx[b0],
-                    surface.UvIdx[b1],
-                    surface.UvIdx[b2]
-                };
-            }
-
+            var surfA = new Surface();
+            surfA.Indices.Add(a0);
+            surfA.Indices.Add(a1);
+            surfA.Indices.Add(a2);
             surfaceList.Add(surfA);
+
+            var surfB = new Surface();
+            surfB.Indices.Add(b0);
+            surfB.Indices.Add(b1);
+            surfB.Indices.Add(b2);
             surfaceList.Add(surfB);
         }
     }
