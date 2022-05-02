@@ -337,22 +337,22 @@ class WavefrontObj : BaseModel {
         // Vertex
         var vformat = "";
         switch (SwapAxiz) {
-        case SwapAxiz.XYZ:
+        case ESwapAxiz.XYZ:
             vformat = "v {0} {1} {2}";
             break;
-        case SwapAxiz.XZY:
+        case ESwapAxiz.XZY:
             vformat = "v {0} {2} {1}";
             break;
-        case SwapAxiz.YXZ:
+        case ESwapAxiz.YXZ:
             vformat = "v {1} {0} {2}";
             break;
-        case SwapAxiz.YZX:
+        case ESwapAxiz.YZX:
             vformat = "v {1} {2} {0}";
             break;
-        case SwapAxiz.ZXY:
+        case ESwapAxiz.ZXY:
             vformat = "v {2} {0} {1}";
             break;
-        case SwapAxiz.ZYX:
+        case ESwapAxiz.ZYX:
             vformat = "v {2} {1} {0}";
             break;
         }

@@ -1,37 +1,37 @@
-﻿public enum SwapAxiz {
-    XYZ,
-    XZY,
-    YXZ,
-    YZX,
-    ZXY,
-    ZYX
-}
+﻿abstract class BaseModel {
+    public enum ESwapAxiz {
+        XYZ,
+        XZY,
+        YXZ,
+        YZX,
+        ZXY,
+        ZYX
+    }
 
-public enum InvertAxiz {
-    None = 0,
-    X = 1,
-    Y = 2,
-    Z = 4
-}
+    public enum EInvertAxiz {
+        None = 0,
+        X = 1,
+        Y = 2,
+        Z = 4
+    }
 
-public enum InvertUV {
-    None = 0,
-    U = 1,
-    V = 2
-}
+    public enum EInvertUV {
+        None = 0,
+        U = 1,
+        V = 2
+    }
 
-abstract class BaseModel {
-    public SwapAxiz SwapAxiz = SwapAxiz.XYZ;
+    public ESwapAxiz SwapAxiz = ESwapAxiz.XYZ;
     public bool SwapUV = false;
-    public InvertAxiz InvertAxiz = InvertAxiz.None;
-    public InvertUV InvertUV = InvertUV.None;
+    public EInvertAxiz InvertAxiz = EInvertAxiz.None;
+    public EInvertUV InvertUV = EInvertUV.None;
 
-    public int SignX { get { return 0 < (InvertAxiz & InvertAxiz.X) ? -1 : 1; } }
-    public int SignY { get { return 0 < (InvertAxiz & InvertAxiz.Y) ? -1 : 1; } }
-    public int SignZ { get { return 0 < (InvertAxiz & InvertAxiz.Z) ? -1 : 1; } }
+    public int SignX { get { return 0 < (InvertAxiz & EInvertAxiz.X) ? -1 : 1; } }
+    public int SignY { get { return 0 < (InvertAxiz & EInvertAxiz.Y) ? -1 : 1; } }
+    public int SignZ { get { return 0 < (InvertAxiz & EInvertAxiz.Z) ? -1 : 1; } }
 
-    public bool InvertU { get { return 0 < (InvertUV & InvertUV.U); } }
-    public bool InvertV { get { return 0 < (InvertUV & InvertUV.V); } }
+    public bool InvertU { get { return 0 < (InvertUV & EInvertUV.U); } }
+    public bool InvertV { get { return 0 < (InvertUV & EInvertUV.V); } }
 
     public abstract void Save(string path);
 

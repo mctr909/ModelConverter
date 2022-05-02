@@ -4,16 +4,27 @@ using System.IO;
 using System.IO.Compression;
 
 class Metasequoia : BaseModel {
+    /*
+     * Object
+     *   Name : string
+     *   Vertex : Array<vec3>
+     *   Surface : Array<{
+     *     VertexIndex : Array<int>
+     *     UV : Array<float[]>
+     *     Material : int
+     *   }>
+     */
+
     public struct Object {
         public string Name;
-        public List<vec3> VertexList;
-        public List<Surface> SurfaceList;
+        public List<vec3> VertList;
+        public List<Surface> Surfaces;
     }
 
     public struct Surface {
-        public List<int> VertexIndex;
+        public List<int> VertIdx;
         public List<float[]> UvList;
-        public int MaterialIndex;
+        public int Material;
     }
 
     public struct Material {
@@ -128,24 +139,24 @@ class Metasequoia : BaseModel {
                 fs.WriteLine("\tcolor_type 0");
                 // Vertex
                 {
-                    fs.WriteLine("\tvertex " + obj.VertexList.Count + " {");
-                    foreach (var v in obj.VertexList) {
+                    fs.WriteLine("\tvertex " + obj.VertList.Count + " {");
+                    foreach (var v in obj.VertList) {
                         fs.WriteLine("\t\t{0} {1} {2}", v.x, v.y, v.z);
                     }
                     fs.WriteLine("\t}");
                 }
                 // Face
                 {
-                    fs.WriteLine("\tface " + obj.SurfaceList.Count + " {");
-                    foreach (var f in obj.SurfaceList) {
+                    fs.WriteLine("\tface " + obj.Surfaces.Count + " {");
+                    foreach (var f in obj.Surfaces) {
                         // V
-                        fs.Write("\t\t {0} V(", f.VertexIndex.Count);
-                        fs.Write("{0}", f.VertexIndex[0]);
-                        for (int ivert = 1; ivert < f.VertexIndex.Count; ivert++) {
-                            fs.Write(" {0}", f.VertexIndex[ivert]);
+                        fs.Write("\t\t {0} V(", f.VertIdx.Count);
+                        fs.Write("{0}", f.VertIdx[0]);
+                        for (int ivert = 1; ivert < f.VertIdx.Count; ivert++) {
+                            fs.Write(" {0}", f.VertIdx[ivert]);
                         }
                         // M
-                        fs.Write(") M({0})", f.MaterialIndex);
+                        fs.Write(") M({0})", f.Material);
                         // UV
                         if (f.UvList != null && 0 < f.UvList.Count) {
                             fs.Write(" UV(");
@@ -173,7 +184,7 @@ class Metasequoia : BaseModel {
     public override void Normalize(float scale = 1) {
         var ofs = new vec3(float.MaxValue, float.MaxValue, float.MaxValue);
         foreach (var obj in ObjectList) {
-            foreach (var v in obj.VertexList) {
+            foreach (var v in obj.VertList) {
                 ofs.x = Math.Min(ofs.x, v.x);
                 ofs.y = Math.Min(ofs.y, v.y);
                 ofs.z = Math.Min(ofs.z, v.z);
@@ -181,7 +192,7 @@ class Metasequoia : BaseModel {
         }
         var max = new vec3(float.MinValue, float.MinValue, float.MinValue);
         foreach (var obj in ObjectList) {
-            foreach (var v in obj.VertexList) {
+            foreach (var v in obj.VertList) {
                 var sv = v - ofs;
                 max.x = Math.Max(max.x, sv.x);
                 max.y = Math.Max(max.y, sv.y);
@@ -190,8 +201,8 @@ class Metasequoia : BaseModel {
         }
         var size = Math.Max(max.x, Math.Max(max.y, max.z));
         foreach (var obj in ObjectList) {
-            for (int i = 0; i < obj.VertexList.Count; i++) {
-                obj.VertexList[i] *= scale / size;
+            for (int i = 0; i < obj.VertList.Count; i++) {
+                obj.VertList[i] *= scale / size;
             }
         }
     }
@@ -200,23 +211,23 @@ class Metasequoia : BaseModel {
         for (int j = 0; j < ObjectList.Count; j++) {
             var obj = ObjectList[j];
             var surfaceList = new List<Surface>();
-            foreach (var s in obj.SurfaceList) {
-                if (s.VertexIndex.Count % 2 == 0) {
-                    evenPoligon(surfaceList, s.VertexIndex);
+            foreach (var s in obj.Surfaces) {
+                if (s.VertIdx.Count % 2 == 0) {
+                    evenPoligon(surfaceList, s.VertIdx);
                 } else {
-                    oddPoligon(surfaceList, s.VertexIndex);
+                    oddPoligon(surfaceList, s.VertIdx);
                 }
             }
-            obj.SurfaceList.Clear();
+            obj.Surfaces.Clear();
             foreach (var s in surfaceList) {
-                obj.SurfaceList.Add(s);
+                obj.Surfaces.Add(s);
             }
         }
     }
 
     void oddPoligon(List<Surface> surfaceList, List<int> vertexIndex) {
         var surface = new Surface();
-        surface.VertexIndex = new List<int> {
+        surface.VertIdx = new List<int> {
             vertexIndex[vertexIndex.Count - 2],
             vertexIndex[vertexIndex.Count - 1],
             vertexIndex[0]
@@ -224,14 +235,14 @@ class Metasequoia : BaseModel {
         surfaceList.Add(surface);
         for (int i = 0; i < vertexIndex.Count / 2 - 1; i++) {
             surface = new Surface();
-            surface.VertexIndex = new List<int> {
+            surface.VertIdx = new List<int> {
                 vertexIndex[i],
                 vertexIndex[i + 1],
                 vertexIndex[vertexIndex.Count - i - 3]
             };
             surfaceList.Add(surface);
             surface = new Surface();
-            surface.VertexIndex = new List<int> {
+            surface.VertIdx = new List<int> {
                 vertexIndex[vertexIndex.Count - i - 3],
                 vertexIndex[vertexIndex.Count - i - 2],
                 vertexIndex[i]
@@ -244,14 +255,14 @@ class Metasequoia : BaseModel {
         Surface surface;
         for (int i = 0; i < vertexIndex.Count / 2 - 1; i++) {
             surface = new Surface();
-            surface.VertexIndex = new List<int> {
+            surface.VertIdx = new List<int> {
                 vertexIndex[i],
                 vertexIndex[i + 1],
                 vertexIndex[vertexIndex.Count - i - 2]
             };
             surfaceList.Add(surface);
             surface = new Surface();
-            surface.VertexIndex = new List<int> {
+            surface.VertIdx = new List<int> {
                 vertexIndex[vertexIndex.Count - i - 2],
                 vertexIndex[vertexIndex.Count - i - 1],
                 vertexIndex[i]
@@ -391,13 +402,13 @@ class Metasequoia : BaseModel {
             case "\tnormal_weight":
                 break;
             case "\tvertex":
-                obj.VertexList = loadVertex(fs);
+                obj.VertList = loadVertex(fs);
                 break;
             case "\tBVertex":
-                obj.VertexList = loadBVertex(fs);
+                obj.VertList = loadBVertex(fs);
                 break;
             case "\tface":
-                obj.SurfaceList = loadFace(fs);
+                obj.Surfaces = loadFace(fs);
                 break;
             case "}":
                 ObjectList.Add(obj);
@@ -450,9 +461,9 @@ class Metasequoia : BaseModel {
             line = line.TrimStart();
 
             var surface = new Surface();
-            surface.VertexIndex = new List<int>();
+            surface.VertIdx = new List<int>();
             surface.UvList = new List<float[]>();
-            surface.MaterialIndex = -1;
+            surface.Material = -1;
 
             // Vertex count
             var vertexCountEnd = line.IndexOf(" ");
@@ -465,12 +476,12 @@ class Metasequoia : BaseModel {
                 case "V": {
                     var indexes = cols[colIdx + 1].Split(" ");
                     foreach (var idx in indexes) {
-                        surface.VertexIndex.Add(int.Parse(idx));
+                        surface.VertIdx.Add(int.Parse(idx));
                     }
                     break;
                 }
                 case "M":
-                    surface.MaterialIndex = int.Parse(cols[colIdx + 1]);
+                    surface.Material = int.Parse(cols[colIdx + 1]);
                     break;
                 case "UV": {
                     var uv = cols[colIdx + 1].Split(" ");

@@ -63,9 +63,9 @@ namespace ModelConverter {
             }
 
             Console.Write("UVの上下を入れ替えますか?[y/n]：");
-            var invertUV = InvertUV.None;
+            var invertUV = BaseModel.EInvertUV.None;
             if ("y" == Console.ReadLine()) {
-                invertUV |= InvertUV.V;
+                invertUV |= BaseModel.EInvertUV.V;
             }
 
             for (int argc = 0; argc < args.Length; argc++) {
@@ -280,20 +280,20 @@ namespace ModelConverter {
             foreach (var obj in stl.ObjectList) {
                 var curObject = new Metasequoia.Object();
                 curObject.Name = obj.Name;
-                curObject.SurfaceList = new List<Metasequoia.Surface>();
-                curObject.VertexList = new List<vec3>();
+                curObject.Surfaces = new List<Metasequoia.Surface>();
+                curObject.VertList = new List<vec3>();
                 foreach (var s in obj.SurfaceList) {
                     var curSurface = new Metasequoia.Surface();
-                    curSurface.MaterialIndex = -1;
-                    curSurface.VertexIndex = new List<int> {
-                        curObject.VertexList.Count,
-                        curObject.VertexList.Count + 1,
-                        curObject.VertexList.Count + 2
+                    curSurface.Material = -1;
+                    curSurface.VertIdx = new List<int> {
+                        curObject.VertList.Count,
+                        curObject.VertList.Count + 1,
+                        curObject.VertList.Count + 2
                     };
-                    curObject.VertexList.Add(new vec3(s.V3.y, s.V3.z, s.V3.x));
-                    curObject.VertexList.Add(new vec3(s.V2.y, s.V2.z, s.V2.x));
-                    curObject.VertexList.Add(new vec3(s.V1.y, s.V1.z, s.V1.x));
-                    curObject.SurfaceList.Add(curSurface);
+                    curObject.VertList.Add(new vec3(s.V3.y, s.V3.z, s.V3.x));
+                    curObject.VertList.Add(new vec3(s.V2.y, s.V2.z, s.V2.x));
+                    curObject.VertList.Add(new vec3(s.V1.y, s.V1.z, s.V1.x));
+                    curObject.Surfaces.Add(curSurface);
                 }
                 output.ObjectList.Add(curObject);
             }
@@ -349,20 +349,20 @@ namespace ModelConverter {
             foreach (var obj in stl.ObjectList) {
                 var curObject = new Metasequoia.Object();
                 curObject.Name = obj.Name;
-                curObject.SurfaceList = new List<Metasequoia.Surface>();
-                curObject.VertexList = new List<vec3>();
+                curObject.Surfaces = new List<Metasequoia.Surface>();
+                curObject.VertList = new List<vec3>();
                 foreach (var s in obj.SurfaceList) {
                     var curSurface = new Metasequoia.Surface();
-                    curSurface.MaterialIndex = -1;
-                    curSurface.VertexIndex = new List<int> {
-                        curObject.VertexList.Count,
-                        curObject.VertexList.Count + 1,
-                        curObject.VertexList.Count + 2
+                    curSurface.Material = -1;
+                    curSurface.VertIdx = new List<int> {
+                        curObject.VertList.Count,
+                        curObject.VertList.Count + 1,
+                        curObject.VertList.Count + 2
                     };
-                    curObject.VertexList.Add(new vec3(s.V3.y, s.V3.z, s.V3.x));
-                    curObject.VertexList.Add(new vec3(s.V2.y, s.V2.z, s.V2.x));
-                    curObject.VertexList.Add(new vec3(s.V1.y, s.V1.z, s.V1.x));
-                    curObject.SurfaceList.Add(curSurface);
+                    curObject.VertList.Add(new vec3(s.V3.y, s.V3.z, s.V3.x));
+                    curObject.VertList.Add(new vec3(s.V2.y, s.V2.z, s.V2.x));
+                    curObject.VertList.Add(new vec3(s.V1.y, s.V1.z, s.V1.x));
+                    curObject.Surfaces.Add(curSurface);
                 }
                 output.ObjectList.Add(curObject);
             }
@@ -450,21 +450,21 @@ namespace ModelConverter {
             foreach (var o in obj.ObjectList) {
                 var curObj = new Metasequoia.Object();
                 curObj.Name = o.Name;
-                curObj.SurfaceList = new List<Metasequoia.Surface>();
-                curObj.VertexList = new List<vec3>();
+                curObj.Surfaces = new List<Metasequoia.Surface>();
+                curObj.VertList = new List<vec3>();
                 var curObjVertexIdx = new List<int>();
                 foreach (var s in o.SurfaceList) {
                     var curSurface = new Metasequoia.Surface();
-                    curSurface.MaterialIndex = obj.GetMaterialIndex(s.MaterialName);
+                    curSurface.Material = obj.GetMaterialIndex(s.MaterialName);
                     // Vertex
-                    curSurface.VertexIndex = new List<int>();
+                    curSurface.VertIdx = new List<int>();
                     for (int i = s.VertexIndex.Count - 1; 0 <= i; i--) {
                         var idx = s.VertexIndex[i] - 1;
                         if (!curObjVertexIdx.Contains(idx)) {
                             curObjVertexIdx.Add(idx);
-                            curObj.VertexList.Add(obj.VertexList[idx]);
+                            curObj.VertList.Add(obj.VertexList[idx]);
                         };
-                        curSurface.VertexIndex.Add(curObjVertexIdx.IndexOf(idx));
+                        curSurface.VertIdx.Add(curObjVertexIdx.IndexOf(idx));
                     }
                     // UV
                     curSurface.UvList = new List<float[]>();
@@ -472,7 +472,7 @@ namespace ModelConverter {
                         var uv = obj.UvList[s.UvIndex[i] - 1];
                         curSurface.UvList.Add(uv);
                     }
-                    curObj.SurfaceList.Add(curSurface);
+                    curObj.Surfaces.Add(curSurface);
                 }
                 output.ObjectList.Add(curObj);
             }
@@ -543,11 +543,11 @@ namespace ModelConverter {
                 var curObject = new StlBin.Object();
                 curObject.Name = obj.Name;
                 curObject.SurfaceList = new List<StlBin.Surface>();
-                foreach (var s in obj.SurfaceList) {
+                foreach (var s in obj.Surfaces) {
                     var curSurface = new StlBin.Surface();
-                    var va = obj.VertexList[s.VertexIndex[0]];
-                    var vo = obj.VertexList[s.VertexIndex[1]];
-                    var vb = obj.VertexList[s.VertexIndex[2]];
+                    var va = obj.VertList[s.VertIdx[0]];
+                    var vo = obj.VertList[s.VertIdx[1]];
+                    var vb = obj.VertList[s.VertIdx[2]];
                     curSurface.Norm = ((va - vo) * (vb - vo)).Norm;
                     curSurface.V1 = new vec3(vb.z, vb.x, vb.y);
                     curSurface.V2 = new vec3(vo.z, vo.x, vo.y);
@@ -567,11 +567,11 @@ namespace ModelConverter {
                 var curObject = new StlText.Object();
                 curObject.Name = obj.Name;
                 curObject.SurfaceList = new List<StlText.Surface>();
-                foreach (var s in obj.SurfaceList) {
+                foreach (var s in obj.Surfaces) {
                     var curSurface = new StlText.Surface();
-                    var va = obj.VertexList[s.VertexIndex[0]];
-                    var vo = obj.VertexList[s.VertexIndex[1]];
-                    var vb = obj.VertexList[s.VertexIndex[2]];
+                    var va = obj.VertList[s.VertIdx[0]];
+                    var vo = obj.VertList[s.VertIdx[1]];
+                    var vb = obj.VertList[s.VertIdx[2]];
                     curSurface.Norm = ((va - vo) * (vb - vo)).Norm;
                     curSurface.V1 = new vec3(vb.z, vb.x, vb.y);
                     curSurface.V2 = new vec3(vo.z, vo.x, vo.y);
@@ -617,15 +617,15 @@ namespace ModelConverter {
                 var curObject = new WavefrontObj.Object();
                 curObject.Name = obj.Name;
                 curObject.SurfaceList = new List<WavefrontObj.Surface>();
-                foreach (var s in obj.SurfaceList) {
+                foreach (var s in obj.Surfaces) {
                     var surface = new WavefrontObj.Surface();
-                    if (0 <= s.MaterialIndex) {
-                        surface.MaterialName = mqo.MaterialList[s.MaterialIndex].Name;
+                    if (0 <= s.Material) {
+                        surface.MaterialName = mqo.MaterialList[s.Material].Name;
                     }
                     surface.VertexIndex = new List<int>();
                     surface.UvIndex = new List<int>();
-                    for (int i = s.VertexIndex.Count - 1; 0 <= i; i--) {
-                        surface.VertexIndex.Add(output.VertexList.Count + s.VertexIndex[i] + 1);
+                    for (int i = s.VertIdx.Count - 1; 0 <= i; i--) {
+                        surface.VertexIndex.Add(output.VertexList.Count + s.VertIdx[i] + 1);
                     }
                     for (int idx = s.UvList.Count - 1; 0 <= idx; idx--) {
                         surface.UvIndex.Add(output.UvList.Count + idx + 1);
@@ -635,7 +635,7 @@ namespace ModelConverter {
                         output.UvList.Add(new float[] { uv[0], uv[1] });
                     }
                 }
-                foreach (var v in obj.VertexList) {
+                foreach (var v in obj.VertList) {
                     output.VertexList.Add(v);
                 }
                 output.ObjectList.Add(curObject);
@@ -680,8 +680,8 @@ namespace ModelConverter {
             }
             foreach (var o in mqo.ObjectList) {
                 var surface = new Collada.OBJECT();
-                foreach (var s in o.SurfaceList) {
-                    var mat = mqo.MaterialList[s.MaterialIndex];
+                foreach (var s in o.Surfaces) {
+                    var mat = mqo.MaterialList[s.Material];
                     surface.Material = mat.Name;
                     surface.Vert = new List<vec3>();
                     surface.Norm = new List<vec3>();
