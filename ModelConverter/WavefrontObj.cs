@@ -219,7 +219,7 @@ class WavefrontObj : BaseModel {
 
                 switch (cols[0].ToLower()) {
                 case "mtllib":
-                    loadMaterial(Path.GetDirectoryName(path), cols[1]);
+                    loadMaterial(Path.GetDirectoryName(path), line.Substring(7));
                     break;
                 case "usemtl":
                     curMaterial = line.Substring(7).Replace("\"", "");
