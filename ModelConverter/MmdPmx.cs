@@ -5,98 +5,6 @@ using System.Text;
 
 namespace ModelConverter {
     class MmdPmx : BaseModel {
-        const uint MAGIC_ID = 0x20584D50;
-        const float VERSION = 2.0f;
-
-        Encoding mEnc = Encoding.Unicode;
-
-        byte mEncode = 0;
-        byte mAdditionalUV = 0;
-        byte mVertexIndexSize = 4;
-        byte mTextureIndexSize = 4;
-        byte mMaterialIndexSize = 4;
-        byte mBoneIndexSize = 4;
-        byte mMorpheIndexSize = 4;
-        byte mRigidIndexSize = 4;
-
-        List<Vertex> Vertices = new List<Vertex>();
-        List<int[]> Faces = new List<int[]>();
-        List<string> Textures = new List<string>();
-        List<Material> Materials = new List<Material>();
-        List<Bone> Bones = new List<Bone>();
-        List<Morphe> Morphes = new List<Morphe>();
-        List<DisplayGroup> DisplayGroups = new List<DisplayGroup>();
-        List<Rigid> Rigids = new List<Rigid>();
-        List<Joint> Joints = new List<Joint>();
-
-        public string FilePath;
-        public string ModelName;
-        public string ModelNameEng;
-        public string Comment;
-        public string CommentEng;
-
-        #region const
-        enum WeightType : byte {
-            BDEF1 = 0,
-            BDEF2 = 1,
-            BDEF4 = 2,
-            SDEF = 3
-        }
-
-        enum SphereMode : byte {
-            None = 0,
-            Mul = 1,
-            Add = 2,
-            SubTexture = 3
-        }
-
-        enum OperatePanel : byte {
-            Reserved = 0,
-            Mayu = 1,
-            Me = 2,
-            Kuchi = 3,
-            Other = 4
-        }
-
-        enum MorpheType : byte {
-            Group = 0,
-            Vertex = 1,
-            Bone = 2,
-            UV = 3,
-            AdditionalUV1 = 4,
-            AdditionalUV2 = 5,
-            AdditionalUV3 = 6,
-            AdditionalUV4 = 7,
-            Material = 8
-        }
-
-        enum OffsetType : byte {
-            Mul = 0,
-            Add = 1
-        }
-
-        enum GroupType : byte {
-            Bone = 0,
-            Morphe = 1
-        }
-
-        enum FormType : byte {
-            Sphere = 0,
-            Box = 1,
-            Capsule = 2
-        }
-
-        enum CalcType : byte {
-            BoneTracking = 0,
-            Calc = 1,
-            BoneTracking_Calc = 2
-        }
-
-        enum JointType : byte {
-            SixDOFSpring = 0
-        }
-        #endregion
-
         #region struct
         struct Vertex {
             public vec3 Vert;
@@ -144,7 +52,7 @@ namespace ModelConverter {
             public Material(int colorIdx = 0) {
                 Name = "";
                 NameEng = "";
-                
+
                 float[] col = new float[3];
                 switch (colorIdx % 5) {
                 case 0:
@@ -889,188 +797,325 @@ namespace ModelConverter {
         }
         #endregion
 
-        #region Index
-        int loadVertexIndex(BinaryReader br) {
-            switch (mVertexIndexSize) {
-            case 1:
-                return br.ReadByte();
-            case 2:
-                return br.ReadUInt16();
-            case 4:
-                return br.ReadInt32();
-            default:
-                return -1;
-            }
+        #region enum
+        enum WeightType : byte {
+            BDEF1 = 0,
+            BDEF2 = 1,
+            BDEF4 = 2,
+            SDEF = 3
         }
 
-        void writeVertexIndex(BinaryWriter bw, int index) {
-            switch (mVertexIndexSize) {
-            case 1:
-                bw.Write((byte)index);
-                break;
-            case 2:
-                bw.Write((ushort)index);
-                break;
-            case 4:
-                bw.Write(index);
-                break;
-            default:
-                break;
-            }
+        enum SphereMode : byte {
+            None = 0,
+            Mul = 1,
+            Add = 2,
+            SubTexture = 3
         }
 
-        int loadTextureIndex(BinaryReader br) {
-            switch (mTextureIndexSize) {
-            case 1:
-                return br.ReadByte();
-            case 2:
-                return br.ReadUInt16();
-            case 4:
-                return br.ReadInt32();
-            default:
-                return -1;
-            }
+        enum OperatePanel : byte {
+            Reserved = 0,
+            Mayu = 1,
+            Me = 2,
+            Kuchi = 3,
+            Other = 4
         }
 
-        void writeTextureIndex(BinaryWriter bw, int index) {
-            switch (mTextureIndexSize) {
-            case 1:
-                bw.Write((byte)index);
-                break;
-            case 2:
-                bw.Write((ushort)index);
-                break;
-            case 4:
-                bw.Write(index);
-                break;
-            default:
-                break;
-            }
+        enum MorpheType : byte {
+            Group = 0,
+            Vertex = 1,
+            Bone = 2,
+            UV = 3,
+            AdditionalUV1 = 4,
+            AdditionalUV2 = 5,
+            AdditionalUV3 = 6,
+            AdditionalUV4 = 7,
+            Material = 8
         }
 
-        int loadMaterialIndex(BinaryReader br) {
-            switch (mMaterialIndexSize) {
-            case 1:
-                return br.ReadByte();
-            case 2:
-                return br.ReadUInt16();
-            case 4:
-                return br.ReadInt32();
-            default:
-                return -1;
-            }
+        enum OffsetType : byte {
+            Mul = 0,
+            Add = 1
         }
 
-        void writeMaterialIndex(BinaryWriter bw, int index) {
-            switch (mMaterialIndexSize) {
-            case 1:
-                bw.Write((byte)index);
-                break;
-            case 2:
-                bw.Write((ushort)index);
-                break;
-            case 4:
-                bw.Write(index);
-                break;
-            default:
-                break;
-            }
+        enum GroupType : byte {
+            Bone = 0,
+            Morphe = 1
         }
 
-        int loadBoneIndex(BinaryReader br) {
-            switch (mBoneIndexSize) {
-            case 1:
-                return br.ReadByte();
-            case 2:
-                return br.ReadUInt16();
-            case 4:
-                return br.ReadInt32();
-            default:
-                return -1;
-            }
+        enum FormType : byte {
+            Sphere = 0,
+            Box = 1,
+            Capsule = 2
         }
 
-        void writeBoneIndex(BinaryWriter bw, int index) {
-            switch (mBoneIndexSize) {
-            case 1:
-                bw.Write((byte)index);
-                break;
-            case 2:
-                bw.Write((ushort)index);
-                break;
-            case 4:
-                bw.Write(index);
-                break;
-            default:
-                break;
-            }
+        enum CalcType : byte {
+            BoneTracking = 0,
+            Calc = 1,
+            BoneTracking_Calc = 2
         }
 
-        int loadMorpheIndex(BinaryReader br) {
-            switch (mMorpheIndexSize) {
-            case 1:
-                return br.ReadByte();
-            case 2:
-                return br.ReadUInt16();
-            case 4:
-                return br.ReadInt32();
-            default:
-                return -1;
-            }
-        }
-
-        void writeMorpheIndex(BinaryWriter bw, int index) {
-            switch (mMorpheIndexSize) {
-            case 1:
-                bw.Write((byte)index);
-                break;
-            case 2:
-                bw.Write((ushort)index);
-                break;
-            case 4:
-                bw.Write(index);
-                break;
-            default:
-                break;
-            }
-        }
-
-        int loadRigidIndex(BinaryReader br) {
-            switch (mRigidIndexSize) {
-            case 1:
-                return br.ReadByte();
-            case 2:
-                return br.ReadUInt16();
-            case 4:
-                return br.ReadInt32();
-            default:
-                return -1;
-            }
-        }
-
-        void writeRigidIndex(BinaryWriter bw, int index) {
-            switch (mRigidIndexSize) {
-            case 1:
-                bw.Write((byte)index);
-                break;
-            case 2:
-                bw.Write((ushort)index);
-                break;
-            case 4:
-                bw.Write(index);
-                break;
-            default:
-                break;
-            }
+        enum JointType : byte {
+            SixDOFSpring = 0
         }
         #endregion
+
+        class Header {
+            const uint MAGIC_ID = 0x20584D50;
+            const float VERSION = 2.0f;
+
+            byte mEncode = 0;
+            byte mAdditionalUV = 0;
+            byte mVertexIndexSize = 4;
+            byte mTextureIndexSize = 4;
+            byte mMaterialIndexSize = 4;
+            byte mBoneIndexSize = 4;
+            byte mMorpheIndexSize = 4;
+            byte mRigidIndexSize = 4;
+
+            Encoding Encode { get { return 0 == mEncode ? Encoding.Unicode : Encoding.UTF8; } }
+
+            public byte AdditionalUV { get { return mAdditionalUV; } }
+
+            public Header() { }
+
+            public Header(BinaryReader br) {
+                br.ReadUInt32();
+                br.ReadSingle();
+                var size = br.ReadByte();
+                var data = br.ReadBytes(size);
+                mEncode = data[0];
+                mAdditionalUV = data[1];
+                mVertexIndexSize = data[2];
+                mTextureIndexSize = data[3];
+                mMaterialIndexSize = data[4];
+                mBoneIndexSize = data[5];
+                mMorpheIndexSize = data[6];
+                mRigidIndexSize = data[7];
+            }
+
+            public void Write(BinaryWriter bw) {
+                bw.Write(MAGIC_ID);
+                bw.Write(VERSION);
+                bw.Write((byte)8);
+
+                bw.Write(mEncode);
+                bw.Write(mAdditionalUV);
+                bw.Write(mVertexIndexSize);
+                bw.Write(mTextureIndexSize);
+
+                bw.Write(mMaterialIndexSize);
+                bw.Write(mBoneIndexSize);
+                bw.Write(mMorpheIndexSize);
+                bw.Write(mRigidIndexSize);
+            }
+
+            public string GetString(byte[] data) {
+                return Encode.GetString(data);
+            }
+
+            public byte[] GetBytes(string str) {
+                return Encode.GetBytes(str);
+            }
+
+            public int VertexIndex(BinaryReader br) {
+                switch (mVertexIndexSize) {
+                case 1:
+                    return br.ReadByte();
+                case 2:
+                    return br.ReadUInt16();
+                case 4:
+                    return br.ReadInt32();
+                default:
+                    return -1;
+                }
+            }
+
+            public void VertexIndex(BinaryWriter bw, int index) {
+                switch (mVertexIndexSize) {
+                case 1:
+                    bw.Write((byte)index);
+                    break;
+                case 2:
+                    bw.Write((ushort)index);
+                    break;
+                case 4:
+                    bw.Write(index);
+                    break;
+                default:
+                    break;
+                }
+            }
+
+            public int TextureIndex(BinaryReader br) {
+                switch (mTextureIndexSize) {
+                case 1:
+                    return br.ReadByte();
+                case 2:
+                    return br.ReadUInt16();
+                case 4:
+                    return br.ReadInt32();
+                default:
+                    return -1;
+                }
+            }
+
+            public void TextureIndex(BinaryWriter bw, int index) {
+                switch (mTextureIndexSize) {
+                case 1:
+                    bw.Write((byte)index);
+                    break;
+                case 2:
+                    bw.Write((ushort)index);
+                    break;
+                case 4:
+                    bw.Write(index);
+                    break;
+                default:
+                    break;
+                }
+            }
+
+            public int MaterialIndex(BinaryReader br) {
+                switch (mMaterialIndexSize) {
+                case 1:
+                    return br.ReadByte();
+                case 2:
+                    return br.ReadUInt16();
+                case 4:
+                    return br.ReadInt32();
+                default:
+                    return -1;
+                }
+            }
+
+            public void MaterialIndex(BinaryWriter bw, int index) {
+                switch (mMaterialIndexSize) {
+                case 1:
+                    bw.Write((byte)index);
+                    break;
+                case 2:
+                    bw.Write((ushort)index);
+                    break;
+                case 4:
+                    bw.Write(index);
+                    break;
+                default:
+                    break;
+                }
+            }
+
+            public int BoneIndex(BinaryReader br) {
+                switch (mBoneIndexSize) {
+                case 1:
+                    return br.ReadByte();
+                case 2:
+                    return br.ReadUInt16();
+                case 4:
+                    return br.ReadInt32();
+                default:
+                    return -1;
+                }
+            }
+
+            public void BoneIndex(BinaryWriter bw, int index) {
+                switch (mBoneIndexSize) {
+                case 1:
+                    bw.Write((byte)index);
+                    break;
+                case 2:
+                    bw.Write((ushort)index);
+                    break;
+                case 4:
+                    bw.Write(index);
+                    break;
+                default:
+                    break;
+                }
+            }
+
+            public int MorpheIndex(BinaryReader br) {
+                switch (mMorpheIndexSize) {
+                case 1:
+                    return br.ReadByte();
+                case 2:
+                    return br.ReadUInt16();
+                case 4:
+                    return br.ReadInt32();
+                default:
+                    return -1;
+                }
+            }
+
+            public void MorpheIndex(BinaryWriter bw, int index) {
+                switch (mMorpheIndexSize) {
+                case 1:
+                    bw.Write((byte)index);
+                    break;
+                case 2:
+                    bw.Write((ushort)index);
+                    break;
+                case 4:
+                    bw.Write(index);
+                    break;
+                default:
+                    break;
+                }
+            }
+
+            public int RigidIndex(BinaryReader br) {
+                switch (mRigidIndexSize) {
+                case 1:
+                    return br.ReadByte();
+                case 2:
+                    return br.ReadUInt16();
+                case 4:
+                    return br.ReadInt32();
+                default:
+                    return -1;
+                }
+            }
+
+            public void RigidIndex(BinaryWriter bw, int index) {
+                switch (mRigidIndexSize) {
+                case 1:
+                    bw.Write((byte)index);
+                    break;
+                case 2:
+                    bw.Write((ushort)index);
+                    break;
+                case 4:
+                    bw.Write(index);
+                    break;
+                default:
+                    break;
+                }
+            }
+        }
+
+        Header mHeader = new Header();
+
+        string mFilePath;
+        string mModelName;
+        string mModelNameEng;
+        string mComment;
+        string mCommentEng;
+
+        List<Vertex> mVertices = new List<Vertex>();
+        List<int[]> mFaces = new List<int[]>();
+        List<string> mTextures = new List<string>();
+        List<Material> mMaterials = new List<Material>();
+        List<Bone> mBones = new List<Bone>();
+        List<Morphe> mMorphes = new List<Morphe>();
+        List<DisplayGroup> mDisplayGroups = new List<DisplayGroup>();
+        List<Rigid> mRigids = new List<Rigid>();
+        List<Joint> mJoints = new List<Joint>();
 
         public MmdPmx() { }
 
         public MmdPmx(string path) {
             var fs = new FileStream(path, FileMode.Open);
             var br = new BinaryReader(fs);
-            loadHeader(br);
+            mHeader = new Header(br);
             loadModelInfo(br);
             loadVertex(br);
             loadFace(br);
@@ -1083,10 +1128,35 @@ namespace ModelConverter {
             loadJoints(br);
             fs.Close();
             fs.Dispose();
+
+            foreach (var v in mVertices) {
+                mVertList.Add(v.Vert);
+                mUvList.Add(v.UV);
+            }
+
+            var fIdxOfs = 0;
+            foreach (var m in mMaterials) {
+                var obj = new Object();
+                obj.Name = m.Name;
+                var faces = m.Vertices / 3;
+                for (int fIdx = fIdxOfs; fIdx < fIdxOfs + faces; fIdx++) {
+                    var f = mFaces[fIdx];
+                    var surf = new Surface();
+                    surf.MaterialName = m.Name;
+                    surf.Indices.Add(new Index(f[0], f[0]));
+                    surf.Indices.Add(new Index(f[1], f[1]));
+                    surf.Indices.Add(new Index(f[2], f[2]));
+                    obj.Surfaces.Add(surf);
+                }
+                fIdxOfs += faces;
+                mObjectList.Add(obj);
+            }
+            Reverse();
         }
 
         public override void Load(BaseModel srcModel) {
             base.Load(srcModel);
+            Reverse();
             ToTriangle();
 
             for (int i = 0; i < mVertList.Count; i++) {
@@ -1095,7 +1165,7 @@ namespace ModelConverter {
                 vert.Vert = v;
                 vert.Norm = new vec3(0, 0, 0);
                 vert.UV = mVertList.Count == mUvList.Count ? mUvList[i] : new float[] { 0, 0 };
-                Vertices.Add(vert);
+                mVertices.Add(vert);
             }
 
             foreach (var o in mObjectList) {
@@ -1104,7 +1174,7 @@ namespace ModelConverter {
                         var i0 = s.Indices[i];
                         var i1 = s.Indices[i + 1];
                         var i2 = s.Indices[i + 2];
-                        Faces.Add(new int[] { i0.Vert, i1.Vert, i2.Vert });
+                        mFaces.Add(new int[] { i0.Vert, i1.Vert, i2.Vert });
                     }
                 }
             }
@@ -1123,7 +1193,7 @@ namespace ModelConverter {
                 }
                 foreach (var m in matDic) {
                     var matList = m.Value;
-                    var tmpMat = new Material(Materials.Count);
+                    var tmpMat = new Material(mMaterials.Count);
                     tmpMat.Name = o.Name + "_" + m.Key;
                     tmpMat.NameEng = tmpMat.Name;
                     if (mMaterialList.ContainsKey(matList[0].MaterialName)) {
@@ -1136,16 +1206,16 @@ namespace ModelConverter {
                     foreach (var s in matList) {
                         tmpMat.Vertices += s.Indices.Count;
                     }
-                    Materials.Add(tmpMat);
+                    mMaterials.Add(tmpMat);
                 }
             }
         }
 
         public override void Save(string path) {
-            FilePath = path;
+            mFilePath = path;
             var fs = new FileStream(path, FileMode.Create);
             var bw = new BinaryWriter(fs);
-            writeHeader(bw);
+            mHeader.Write(bw);
             writeModelInfo(bw);
             writeVertex(bw);
             writeFace(bw);
@@ -1160,74 +1230,40 @@ namespace ModelConverter {
             fs.Dispose();
         }
 
-        void loadHeader(BinaryReader br) {
-            br.ReadUInt32();
-            br.ReadSingle();
-            var size = br.ReadByte();
-            var arr = br.ReadBytes(size);
-            mEncode = arr[0];
-            mAdditionalUV = arr[1];
-            mVertexIndexSize = arr[2];
-            mTextureIndexSize = arr[3];
-
-            mMaterialIndexSize = arr[4];
-            mBoneIndexSize = arr[5];
-            mMorpheIndexSize = arr[6];
-            mRigidIndexSize = arr[7];
-
-            mEnc = 0 == mEncode ? Encoding.Unicode : Encoding.UTF8;
-        }
-
-        void writeHeader(BinaryWriter bw) {
-            bw.Write(MAGIC_ID);
-            bw.Write(VERSION);
-            bw.Write((byte)8);
-
-            bw.Write(mEncode);
-            bw.Write(mAdditionalUV);
-            bw.Write(mVertexIndexSize);
-            bw.Write(mTextureIndexSize);
-
-            bw.Write(mMaterialIndexSize);
-            bw.Write(mBoneIndexSize);
-            bw.Write(mMorpheIndexSize);
-            bw.Write(mRigidIndexSize);
-        }
-
         void loadModelInfo(BinaryReader br) {
             var size = br.ReadInt32();
-            ModelName = mEnc.GetString(br.ReadBytes(size));
+            mModelName = mHeader.GetString(br.ReadBytes(size));
             size = br.ReadInt32();
-            ModelNameEng = mEnc.GetString(br.ReadBytes(size));
+            mModelNameEng = mHeader.GetString(br.ReadBytes(size));
             size = br.ReadInt32();
-            Comment = mEnc.GetString(br.ReadBytes(size));
+            mComment = mHeader.GetString(br.ReadBytes(size));
             size = br.ReadInt32();
-            CommentEng = mEnc.GetString(br.ReadBytes(size));
+            mCommentEng = mHeader.GetString(br.ReadBytes(size));
         }
 
         void writeModelInfo(BinaryWriter bw) {
-            if (string.IsNullOrEmpty(ModelName)) {
-                ModelName = Path.GetFileNameWithoutExtension(FilePath);
+            if (string.IsNullOrEmpty(mModelName)) {
+                mModelName = Path.GetFileNameWithoutExtension(mFilePath);
             }
-            if (string.IsNullOrEmpty(ModelNameEng)) {
-                ModelNameEng = ModelName;
+            if (string.IsNullOrEmpty(mModelNameEng)) {
+                mModelNameEng = mModelName;
             }
-            if (null == Comment) {
-                Comment = "";
+            if (null == mComment) {
+                mComment = "";
             }
-            if (null == CommentEng) {
-                CommentEng = "";
+            if (null == mCommentEng) {
+                mCommentEng = "";
             }
-            var arr = mEnc.GetBytes(ModelName);
+            var arr = mHeader.GetBytes(mModelName);
             bw.Write(arr.Length);
             bw.Write(arr);
-            arr = mEnc.GetBytes(ModelNameEng);
+            arr = mHeader.GetBytes(mModelNameEng);
             bw.Write(arr.Length);
             bw.Write(arr);
-            arr = mEnc.GetBytes(Comment);
+            arr = mHeader.GetBytes(mComment);
             bw.Write(arr.Length);
             bw.Write(arr);
-            arr = mEnc.GetBytes(CommentEng);
+            arr = mHeader.GetBytes(mCommentEng);
             bw.Write(arr.Length);
             bw.Write(arr);
         }
@@ -1251,8 +1287,8 @@ namespace ModelConverter {
                     br.ReadSingle(),
                     br.ReadSingle()
                 };
-                vertex.AdditionalUV = new float[mAdditionalUV, 4];
-                for (int j = 0; j < mAdditionalUV; j++) {
+                vertex.AdditionalUV = new float[mHeader.AdditionalUV, 4];
+                for (int j = 0; j < mHeader.AdditionalUV; j++) {
                     vertex.AdditionalUV[j, 0] = br.ReadSingle();
                     vertex.AdditionalUV[j, 1] = br.ReadSingle();
                     vertex.AdditionalUV[j, 2] = br.ReadSingle();
@@ -1263,27 +1299,27 @@ namespace ModelConverter {
 
                 switch (vertex.WeightType) {
                 case WeightType.BDEF1:
-                    vertex.Bone1 = loadBoneIndex(br);
+                    vertex.Bone1 = mHeader.BoneIndex(br);
                     break;
                 case WeightType.BDEF2:
-                    vertex.Bone1 = loadBoneIndex(br);
-                    vertex.Bone2 = loadBoneIndex(br);
+                    vertex.Bone1 = mHeader.BoneIndex(br);
+                    vertex.Bone2 = mHeader.BoneIndex(br);
                     vertex.Weight1 = br.ReadSingle();
                     vertex.Weight2 = 1.0f - vertex.Weight1;
                     break;
                 case WeightType.BDEF4:
-                    vertex.Bone1 = loadBoneIndex(br);
-                    vertex.Bone2 = loadBoneIndex(br);
-                    vertex.Bone3 = loadBoneIndex(br);
-                    vertex.Bone4 = loadBoneIndex(br);
+                    vertex.Bone1 = mHeader.BoneIndex(br);
+                    vertex.Bone2 = mHeader.BoneIndex(br);
+                    vertex.Bone3 = mHeader.BoneIndex(br);
+                    vertex.Bone4 = mHeader.BoneIndex(br);
                     vertex.Weight1 = br.ReadSingle();
                     vertex.Weight2 = br.ReadSingle();
                     vertex.Weight3 = br.ReadSingle();
                     vertex.Weight4 = br.ReadSingle();
                     break;
                 case WeightType.SDEF:
-                    vertex.Bone1 = loadBoneIndex(br);
-                    vertex.Bone2 = loadBoneIndex(br);
+                    vertex.Bone1 = mHeader.BoneIndex(br);
+                    vertex.Bone2 = mHeader.BoneIndex(br);
                     vertex.Weight1 = br.ReadSingle();
                     vertex.Weight2 = 1.0f - vertex.Weight1;
                     vertex.SdefC = br.ReadSingle();
@@ -1295,14 +1331,14 @@ namespace ModelConverter {
                 }
 
                 vertex.Edge = br.ReadSingle();
-                Vertices.Add(vertex);
+                mVertices.Add(vertex);
             }
         }
 
         void writeVertex(BinaryWriter bw) {
-            bw.Write(Vertices.Count);
+            bw.Write(mVertices.Count);
 
-            foreach (var vertex in Vertices) {
+            foreach (var vertex in mVertices) {
                 bw.Write(vertex.Vert.x);
                 bw.Write(vertex.Vert.y);
                 bw.Write(vertex.Vert.z);
@@ -1314,7 +1350,7 @@ namespace ModelConverter {
                 bw.Write(vertex.UV[0]);
                 bw.Write(vertex.UV[1]);
 
-                for (int j = 0; j < mAdditionalUV; j++) {
+                for (int j = 0; j < mHeader.AdditionalUV; j++) {
                     bw.Write(vertex.AdditionalUV[j, 0]);
                     bw.Write(vertex.AdditionalUV[j, 1]);
                     bw.Write(vertex.AdditionalUV[j, 2]);
@@ -1325,26 +1361,26 @@ namespace ModelConverter {
 
                 switch (vertex.WeightType) {
                 case WeightType.BDEF1:
-                    writeBoneIndex(bw, vertex.Bone1);
+                    mHeader.BoneIndex(bw, vertex.Bone1);
                     break;
                 case WeightType.BDEF2:
-                    writeBoneIndex(bw, vertex.Bone1);
-                    writeBoneIndex(bw, vertex.Bone2);
+                    mHeader.BoneIndex(bw, vertex.Bone1);
+                    mHeader.BoneIndex(bw, vertex.Bone2);
                     bw.Write(vertex.Weight1);
                     break;
                 case WeightType.BDEF4:
-                    writeBoneIndex(bw, vertex.Bone1);
-                    writeBoneIndex(bw, vertex.Bone2);
-                    writeBoneIndex(bw, vertex.Bone3);
-                    writeBoneIndex(bw, vertex.Bone4);
+                    mHeader.BoneIndex(bw, vertex.Bone1);
+                    mHeader.BoneIndex(bw, vertex.Bone2);
+                    mHeader.BoneIndex(bw, vertex.Bone3);
+                    mHeader.BoneIndex(bw, vertex.Bone4);
                     bw.Write(vertex.Weight1);
                     bw.Write(vertex.Weight2);
                     bw.Write(vertex.Weight3);
                     bw.Write(vertex.Weight4);
                     break;
                 case WeightType.SDEF:
-                    writeBoneIndex(bw, vertex.Bone1);
-                    writeBoneIndex(bw, vertex.Bone2);
+                    mHeader.BoneIndex(bw, vertex.Bone1);
+                    mHeader.BoneIndex(bw, vertex.Bone2);
                     bw.Write(vertex.Weight1);
                     bw.Write(vertex.SdefC);
                     bw.Write(vertex.SdefR0);
@@ -1365,25 +1401,25 @@ namespace ModelConverter {
                 switch (i % 3) {
                 case 0:
                     indeces = new int[3];
-                    indeces[0] = loadVertexIndex(br);
+                    indeces[0] = mHeader.VertexIndex(br);
                     break;
                 case 1:
-                    indeces[1] = loadVertexIndex(br);
+                    indeces[1] = mHeader.VertexIndex(br);
                     break;
                 case 2:
-                    indeces[2] = loadVertexIndex(br);
-                    Faces.Add(indeces);
+                    indeces[2] = mHeader.VertexIndex(br);
+                    mFaces.Add(indeces);
                     break;
                 }
             }
         }
 
         void writeFace(BinaryWriter bw) {
-            bw.Write(Faces.Count * 3);
-            foreach (var face in Faces) {
-                writeVertexIndex(bw, face[0]);
-                writeVertexIndex(bw, face[1]);
-                writeVertexIndex(bw, face[2]);
+            bw.Write(mFaces.Count * 3);
+            foreach (var face in mFaces) {
+                mHeader.VertexIndex(bw, face[0]);
+                mHeader.VertexIndex(bw, face[1]);
+                mHeader.VertexIndex(bw, face[2]);
             }
         }
 
@@ -1391,14 +1427,14 @@ namespace ModelConverter {
             var count = br.ReadInt32();
             for (int i = 0; i < count; i++) {
                 var size = br.ReadInt32();
-                Textures.Add(mEnc.GetString(br.ReadBytes(size)));
+                mTextures.Add(mHeader.GetString(br.ReadBytes(size)));
             }
         }
 
         void writeTexture(BinaryWriter bw) {
-            bw.Write(Textures.Count);
-            foreach (var texture in Textures) {
-                var arr = mEnc.GetBytes(texture);
+            bw.Write(mTextures.Count);
+            foreach (var texture in mTextures) {
+                var arr = mHeader.GetBytes(texture);
                 bw.Write(arr.Length);
                 bw.Write(arr);
             }
@@ -1410,9 +1446,9 @@ namespace ModelConverter {
                 var mat = new Material();
 
                 var size = br.ReadInt32();
-                mat.Name = mEnc.GetString(br.ReadBytes(size));
+                mat.Name = mHeader.GetString(br.ReadBytes(size));
                 size = br.ReadInt32();
-                mat.NameEng = mEnc.GetString(br.ReadBytes(size));
+                mat.NameEng = mHeader.GetString(br.ReadBytes(size));
 
                 mat.Diffuse = new float[] {
                     br.ReadSingle(),
@@ -1442,31 +1478,31 @@ namespace ModelConverter {
                 };
                 mat.EdgeSize = br.ReadSingle();
 
-                mat.TextureIndex = loadTextureIndex(br);
-                mat.SphereTextureIndex = loadTextureIndex(br);
+                mat.TextureIndex = mHeader.TextureIndex(br);
+                mat.SphereTextureIndex = mHeader.TextureIndex(br);
                 mat.SphereMode = (SphereMode)br.ReadByte();
                 mat.ToonFlag = br.ReadBoolean();
                 if (mat.ToonFlag) {
                     mat.ToonTextureIndex = br.ReadByte();
                 } else {
-                    mat.ToonTextureIndex = loadTextureIndex(br);
+                    mat.ToonTextureIndex = mHeader.TextureIndex(br);
                 }
 
                 size = br.ReadInt32();
-                mat.Text = mEnc.GetString(br.ReadBytes(size));
+                mat.Text = mHeader.GetString(br.ReadBytes(size));
 
                 mat.Vertices = br.ReadInt32();
-                Materials.Add(mat);
+                mMaterials.Add(mat);
             }
         }
 
         void writeMaterial(BinaryWriter bw) {
-            bw.Write(Materials.Count);
-            foreach (var mat in Materials) {
-                var arr = mEnc.GetBytes(mat.Name);
+            bw.Write(mMaterials.Count);
+            foreach (var mat in mMaterials) {
+                var arr = mHeader.GetBytes(mat.Name);
                 bw.Write(arr.Length);
                 bw.Write(arr);
-                arr = mEnc.GetBytes(mat.NameEng);
+                arr = mHeader.GetBytes(mat.NameEng);
                 bw.Write(arr.Length);
                 bw.Write(arr);
 
@@ -1492,17 +1528,17 @@ namespace ModelConverter {
                 bw.Write(mat.EdgeColor[3]);
                 bw.Write(mat.EdgeSize);
 
-                writeTextureIndex(bw, mat.TextureIndex);
-                writeTextureIndex(bw, mat.SphereTextureIndex);
+                mHeader.TextureIndex(bw, mat.TextureIndex);
+                mHeader.TextureIndex(bw, mat.SphereTextureIndex);
                 bw.Write((byte)mat.SphereMode);
                 bw.Write(mat.ToonFlag);
                 if (mat.ToonFlag) {
                     bw.Write((byte)mat.ToonTextureIndex);
                 } else {
-                    writeTextureIndex(bw, mat.ToonTextureIndex);
+                    mHeader.TextureIndex(bw, mat.ToonTextureIndex);
                 }
 
-                arr = mEnc.GetBytes(mat.Text);
+                arr = mHeader.GetBytes(mat.Text);
                 bw.Write(arr.Length);
                 bw.Write(arr);
 
@@ -1516,22 +1552,22 @@ namespace ModelConverter {
                 var bone = new Bone();
 
                 var size = br.ReadInt32();
-                bone.Name = mEnc.GetString(br.ReadBytes(size));
+                bone.Name = mHeader.GetString(br.ReadBytes(size));
                 size = br.ReadInt32();
-                bone.NameEng = mEnc.GetString(br.ReadBytes(size));
+                bone.NameEng = mHeader.GetString(br.ReadBytes(size));
 
                 bone.Pos = new vec3(
                     br.ReadSingle(),
                     br.ReadSingle(),
                     br.ReadSingle()
                 );
-                bone.ParentIndex = loadBoneIndex(br);
+                bone.ParentIndex = mHeader.BoneIndex(br);
                 bone.Layer = br.ReadInt32();
 
                 bone.Flag = new BoneFlag(br.ReadUInt16());
 
                 if (bone.Flag.JointTarget) {
-                    bone.JoinTargetIndex = loadBoneIndex(br);
+                    bone.JoinTargetIndex = mHeader.BoneIndex(br);
                 } else {
                     bone.Offset = new vec3(
                         br.ReadSingle(),
@@ -1541,7 +1577,7 @@ namespace ModelConverter {
                 }
 
                 if (bone.Flag.RotateAssign || bone.Flag.MoveAssign) {
-                    bone.AssignmentIndex = loadBoneIndex(br);
+                    bone.AssignmentIndex = mHeader.BoneIndex(br);
                     bone.AssignmentRatio = br.ReadSingle();
                 }
 
@@ -1571,14 +1607,14 @@ namespace ModelConverter {
                 }
 
                 if (bone.Flag.IK) {
-                    bone.IkTargetIndex = loadBoneIndex(br);
+                    bone.IkTargetIndex = mHeader.BoneIndex(br);
                     bone.IkLoop = br.ReadInt32();
                     bone.IkLoopAngleLimit = br.ReadSingle();
                     bone.IkLinks = new List<IkLink>();
                     var linkCount = br.ReadInt32();
                     for (int j = 0; j < linkCount; j++) {
                         var link = new IkLink();
-                        link.LinkBoneIndex = loadBoneIndex(br);
+                        link.LinkBoneIndex = mHeader.BoneIndex(br);
                         link.AngleLimit = br.ReadByte();
                         if (0 < link.AngleLimit) {
                             link.AngleMin = new vec3(
@@ -1596,17 +1632,17 @@ namespace ModelConverter {
                     }
                 }
 
-                Bones.Add(bone);
+                mBones.Add(bone);
             }
         }
 
         void writeBone(BinaryWriter bw) {
-            bw.Write(Bones.Count);
-            foreach (var bone in Bones) {
-                var arr = mEnc.GetBytes(bone.Name);
+            bw.Write(mBones.Count);
+            foreach (var bone in mBones) {
+                var arr = mHeader.GetBytes(bone.Name);
                 bw.Write(arr.Length);
                 bw.Write(arr);
-                arr = mEnc.GetBytes(bone.NameEng);
+                arr = mHeader.GetBytes(bone.NameEng);
                 bw.Write(arr.Length);
                 bw.Write(arr);
 
@@ -1614,12 +1650,12 @@ namespace ModelConverter {
                 bw.Write(bone.Pos.y);
                 bw.Write(bone.Pos.z);
 
-                writeBoneIndex(bw, bone.ParentIndex);
+                mHeader.BoneIndex(bw, bone.ParentIndex);
                 bw.Write(bone.Layer);
                 bw.Write(bone.Flag.Value);
 
                 if (bone.Flag.JointTarget) {
-                    writeBoneIndex(bw, bone.JoinTargetIndex);
+                    mHeader.BoneIndex(bw, bone.JoinTargetIndex);
                 } else {
                     bw.Write(bone.Offset.x);
                     bw.Write(bone.Offset.y);
@@ -1627,7 +1663,7 @@ namespace ModelConverter {
                 }
 
                 if (bone.Flag.RotateAssign || bone.Flag.MoveAssign) {
-                    writeBoneIndex(bw, bone.AssignmentIndex);
+                    mHeader.BoneIndex(bw, bone.AssignmentIndex);
                     bw.Write(bone.AssignmentRatio);
                 }
 
@@ -1652,12 +1688,12 @@ namespace ModelConverter {
                 }
 
                 if (bone.Flag.IK) {
-                    writeBoneIndex(bw, bone.IkTargetIndex);
+                    mHeader.BoneIndex(bw, bone.IkTargetIndex);
                     bw.Write(bone.IkLoop);
                     bw.Write(bone.IkLoopAngleLimit);
                     bw.Write(bone.IkLinks.Count);
                     foreach (var link in bone.IkLinks) {
-                        writeBoneIndex(bw, link.LinkBoneIndex);
+                        mHeader.BoneIndex(bw, link.LinkBoneIndex);
                         bw.Write(link.AngleLimit);
                         if (0 < link.AngleLimit) {
                             bw.Write(link.AngleMin.x);
@@ -1678,9 +1714,9 @@ namespace ModelConverter {
                 var morphe = new Morphe();
 
                 var size = br.ReadInt32();
-                morphe.Name = mEnc.GetString(br.ReadBytes(size));
+                morphe.Name = mHeader.GetString(br.ReadBytes(size));
                 size = br.ReadInt32();
-                morphe.NameEng = mEnc.GetString(br.ReadBytes(size));
+                morphe.NameEng = mHeader.GetString(br.ReadBytes(size));
 
                 morphe.OperatePanel = (OperatePanel)br.ReadByte();
                 morphe.Type = (MorpheType)br.ReadByte();
@@ -1690,72 +1726,72 @@ namespace ModelConverter {
                 case MorpheType.Group:
                     morphe.Groups = new List<GroupMorphe>();
                     for (int j = 0; j < subCount; j++) {
-                        morphe.Groups.Add(new GroupMorphe(br, loadMorpheIndex(br)));
+                        morphe.Groups.Add(new GroupMorphe(br, mHeader.MorpheIndex(br)));
                     }
                     break;
                 case MorpheType.Vertex:
                     morphe.Vertices = new List<VertexMorphe>();
                     for (int j = 0; j < subCount; j++) {
-                        morphe.Vertices.Add(new VertexMorphe(br, loadVertexIndex(br)));
+                        morphe.Vertices.Add(new VertexMorphe(br, mHeader.VertexIndex(br)));
                     }
                     break;
                 case MorpheType.Bone:
                     morphe.Bones = new List<BoneMorphe>();
                     for (int j = 0; j < subCount; j++) {
-                        morphe.Bones.Add(new BoneMorphe(br, loadBoneIndex(br)));
+                        morphe.Bones.Add(new BoneMorphe(br, mHeader.BoneIndex(br)));
                     }
                     break;
                 case MorpheType.UV:
                     morphe.UVs = new List<UVMorphe>();
                     for (int j = 0; j < subCount; j++) {
-                        morphe.UVs.Add(new UVMorphe(br, loadVertexIndex(br)));
+                        morphe.UVs.Add(new UVMorphe(br, mHeader.VertexIndex(br)));
                     }
                     break;
                 case MorpheType.AdditionalUV1:
                     morphe.AdditionalUV1s = new List<UVMorphe>();
                     for (int j = 0; j < subCount; j++) {
-                        morphe.AdditionalUV1s.Add(new UVMorphe(br, loadVertexIndex(br)));
+                        morphe.AdditionalUV1s.Add(new UVMorphe(br, mHeader.VertexIndex(br)));
                     }
                     break;
                 case MorpheType.AdditionalUV2:
                     morphe.AdditionalUV2s = new List<UVMorphe>();
                     for (int j = 0; j < subCount; j++) {
-                        morphe.AdditionalUV2s.Add(new UVMorphe(br, loadVertexIndex(br)));
+                        morphe.AdditionalUV2s.Add(new UVMorphe(br, mHeader.VertexIndex(br)));
                     }
                     break;
                 case MorpheType.AdditionalUV3:
                     morphe.AdditionalUV3s = new List<UVMorphe>();
                     for (int j = 0; j < subCount; j++) {
-                        morphe.AdditionalUV3s.Add(new UVMorphe(br, loadVertexIndex(br)));
+                        morphe.AdditionalUV3s.Add(new UVMorphe(br, mHeader.VertexIndex(br)));
                     }
                     break;
                 case MorpheType.AdditionalUV4:
                     morphe.AdditionalUV4s = new List<UVMorphe>();
                     for (int j = 0; j < subCount; j++) {
-                        morphe.AdditionalUV4s.Add(new UVMorphe(br, loadVertexIndex(br)));
+                        morphe.AdditionalUV4s.Add(new UVMorphe(br, mHeader.VertexIndex(br)));
                     }
                     break;
                 case MorpheType.Material:
                     morphe.Materials = new List<MaterialMorphe>();
                     for (int j = 0; j < subCount; j++) {
-                        morphe.Materials.Add(new MaterialMorphe(br, loadMaterialIndex(br)));
+                        morphe.Materials.Add(new MaterialMorphe(br, mHeader.MaterialIndex(br)));
                     }
                     break;
                 default:
                     break;
                 }
 
-                Morphes.Add(morphe);
+                mMorphes.Add(morphe);
             }
         }
 
         void writeMorphe(BinaryWriter bw) {
-            bw.Write(Morphes.Count);
-            foreach (var morphe in Morphes) {
-                var arr = mEnc.GetBytes(morphe.Name);
+            bw.Write(mMorphes.Count);
+            foreach (var morphe in mMorphes) {
+                var arr = mHeader.GetBytes(morphe.Name);
                 bw.Write(arr.Length);
                 bw.Write(arr);
-                arr = mEnc.GetBytes(morphe.NameEng);
+                arr = mHeader.GetBytes(morphe.NameEng);
                 bw.Write(arr.Length);
                 bw.Write(arr);
 
@@ -1766,63 +1802,63 @@ namespace ModelConverter {
                 case MorpheType.Group:
                     bw.Write(morphe.Groups.Count);
                     foreach (var group in morphe.Groups) {
-                        writeMorpheIndex(bw, group.Index);
+                        mHeader.MorpheIndex(bw, group.Index);
                         group.Save(bw);
                     }
                     break;
                 case MorpheType.Vertex:
                     bw.Write(morphe.Vertices.Count);
                     foreach (var vertex in morphe.Vertices) {
-                        writeVertexIndex(bw, vertex.Index);
+                        mHeader.VertexIndex(bw, vertex.Index);
                         vertex.Save(bw);
                     }
                     break;
                 case MorpheType.Bone:
                     bw.Write(morphe.Bones.Count);
                     foreach (var bone in morphe.Bones) {
-                        writeBoneIndex(bw, bone.Index);
+                        mHeader.BoneIndex(bw, bone.Index);
                         bone.Save(bw);
                     }
                     break;
                 case MorpheType.UV:
                     bw.Write(morphe.UVs.Count);
                     foreach (var uv in morphe.UVs) {
-                        writeVertexIndex(bw, uv.Index);
+                        mHeader.VertexIndex(bw, uv.Index);
                         uv.Save(bw);
                     }
                     break;
                 case MorpheType.AdditionalUV1:
                     bw.Write(morphe.AdditionalUV1s.Count);
                     foreach (var uv in morphe.AdditionalUV1s) {
-                        writeVertexIndex(bw, uv.Index);
+                        mHeader.VertexIndex(bw, uv.Index);
                         uv.Save(bw);
                     }
                     break;
                 case MorpheType.AdditionalUV2:
                     bw.Write(morphe.AdditionalUV2s.Count);
                     foreach (var uv in morphe.AdditionalUV2s) {
-                        writeVertexIndex(bw, uv.Index);
+                        mHeader.VertexIndex(bw, uv.Index);
                         uv.Save(bw);
                     }
                     break;
                 case MorpheType.AdditionalUV3:
                     bw.Write(morphe.AdditionalUV3s.Count);
                     foreach (var uv in morphe.AdditionalUV3s) {
-                        writeVertexIndex(bw, uv.Index);
+                        mHeader.VertexIndex(bw, uv.Index);
                         uv.Save(bw);
                     }
                     break;
                 case MorpheType.AdditionalUV4:
                     bw.Write(morphe.AdditionalUV4s.Count);
                     foreach (var uv in morphe.AdditionalUV4s) {
-                        writeVertexIndex(bw, uv.Index);
+                        mHeader.VertexIndex(bw, uv.Index);
                         uv.Save(bw);
                     }
                     break;
                 case MorpheType.Material:
                     bw.Write(morphe.Materials.Count);
                     foreach (var mat in morphe.Materials) {
-                        writeMaterialIndex(bw, mat.Index);
+                        mHeader.MaterialIndex(bw, mat.Index);
                         mat.Save(bw);
                     }
                     break;
@@ -1838,9 +1874,9 @@ namespace ModelConverter {
                 var group = new DisplayGroup();
 
                 var size = br.ReadInt32();
-                group.Name = mEnc.GetString(br.ReadBytes(size));
+                group.Name = mHeader.GetString(br.ReadBytes(size));
                 size = br.ReadInt32();
-                group.NameEng = mEnc.GetString(br.ReadBytes(size));
+                group.NameEng = mHeader.GetString(br.ReadBytes(size));
 
                 group.IsSpecial = br.ReadBoolean();
 
@@ -1851,10 +1887,10 @@ namespace ModelConverter {
                     item.Type = (GroupType)br.ReadByte();
                     switch (item.Type) {
                     case GroupType.Bone:
-                        item.Index = loadBoneIndex(br);
+                        item.Index = mHeader.BoneIndex(br);
                         break;
                     case GroupType.Morphe:
-                        item.Index = loadMorpheIndex(br);
+                        item.Index = mHeader.MorpheIndex(br);
                         break;
                     default:
                         break;
@@ -1862,17 +1898,17 @@ namespace ModelConverter {
                     group.List.Add(item);
                 }
 
-                DisplayGroups.Add(group);
+                mDisplayGroups.Add(group);
             }
         }
 
         void writeDisplayGroup(BinaryWriter bw) {
-            bw.Write(DisplayGroups.Count);
-            foreach (var group in DisplayGroups) {
-                var arr = mEnc.GetBytes(group.Name);
+            bw.Write(mDisplayGroups.Count);
+            foreach (var group in mDisplayGroups) {
+                var arr = mHeader.GetBytes(group.Name);
                 bw.Write(arr.Length);
                 bw.Write(arr);
-                arr = mEnc.GetBytes(group.NameEng);
+                arr = mHeader.GetBytes(group.NameEng);
                 bw.Write(arr.Length);
                 bw.Write(arr);
 
@@ -1883,10 +1919,10 @@ namespace ModelConverter {
                     bw.Write((byte)item.Type);
                     switch (item.Type) {
                     case GroupType.Bone:
-                        writeBoneIndex(bw, item.Index);
+                        mHeader.BoneIndex(bw, item.Index);
                         break;
                     case GroupType.Morphe:
-                        writeMorpheIndex(bw, item.Index);
+                        mHeader.MorpheIndex(bw, item.Index);
                         break;
                     default:
                         break;
@@ -1901,11 +1937,11 @@ namespace ModelConverter {
                 var rigid = new Rigid();
 
                 var size = br.ReadInt32();
-                rigid.Name = mEnc.GetString(br.ReadBytes(size));
+                rigid.Name = mHeader.GetString(br.ReadBytes(size));
                 size = br.ReadInt32();
-                rigid.NameEng = mEnc.GetString(br.ReadBytes(size));
+                rigid.NameEng = mHeader.GetString(br.ReadBytes(size));
 
-                rigid.BoneIndex = loadBoneIndex(br);
+                rigid.BoneIndex = mHeader.BoneIndex(br);
 
                 rigid.Gourp = br.ReadByte();
                 rigid.CollisionFlag = new CollisionFlag(br.ReadUInt16());
@@ -1934,21 +1970,21 @@ namespace ModelConverter {
 
                 rigid.CalcType = (CalcType)br.ReadByte();
 
-                Rigids.Add(rigid);
+                mRigids.Add(rigid);
             }
         }
 
         void writeRigid(BinaryWriter bw) {
-            bw.Write(Rigids.Count);
-            foreach (var rigid in Rigids) {
-                var arr = mEnc.GetBytes(rigid.Name);
+            bw.Write(mRigids.Count);
+            foreach (var rigid in mRigids) {
+                var arr = mHeader.GetBytes(rigid.Name);
                 bw.Write(arr.Length);
                 bw.Write(arr);
-                arr = mEnc.GetBytes(rigid.NameEng);
+                arr = mHeader.GetBytes(rigid.NameEng);
                 bw.Write(arr.Length);
                 bw.Write(arr);
 
-                writeBoneIndex(bw, rigid.BoneIndex);
+                mHeader.BoneIndex(bw, rigid.BoneIndex);
 
                 bw.Write(rigid.Gourp);
                 bw.Write(rigid.CollisionFlag.Value);
@@ -1982,15 +2018,15 @@ namespace ModelConverter {
                 var joint = new Joint();
 
                 var size = br.ReadInt32();
-                joint.Name = mEnc.GetString(br.ReadBytes(size));
+                joint.Name = mHeader.GetString(br.ReadBytes(size));
                 size = br.ReadInt32();
-                joint.NameEng = mEnc.GetString(br.ReadBytes(size));
+                joint.NameEng = mHeader.GetString(br.ReadBytes(size));
 
                 joint.Type = (JointType)br.ReadByte();
                 switch (joint.Type) {
                 case JointType.SixDOFSpring:
-                    joint.IndexA = loadRigidIndex(br);
-                    joint.IndexB = loadRigidIndex(br);
+                    joint.IndexA = mHeader.RigidIndex(br);
+                    joint.IndexB = mHeader.RigidIndex(br);
                     joint.Pos = new vec3(
                         br.ReadSingle(),
                         br.ReadSingle(),
@@ -2036,25 +2072,25 @@ namespace ModelConverter {
                     break;
                 }
 
-                Joints.Add(joint);
+                mJoints.Add(joint);
             }
         }
 
         void writeJoints(BinaryWriter bw) {
-            bw.Write(Joints.Count);
-            foreach (var joint in Joints) {
-                var arr = mEnc.GetBytes(joint.Name);
+            bw.Write(mJoints.Count);
+            foreach (var joint in mJoints) {
+                var arr = mHeader.GetBytes(joint.Name);
                 bw.Write(arr.Length);
                 bw.Write(arr);
-                arr = mEnc.GetBytes(joint.NameEng);
+                arr = mHeader.GetBytes(joint.NameEng);
                 bw.Write(arr.Length);
                 bw.Write(arr);
 
                 bw.Write((byte)joint.Type);
                 switch (joint.Type) {
                 case JointType.SixDOFSpring:
-                    writeRigidIndex(bw, joint.IndexA);
-                    writeRigidIndex(bw, joint.IndexB);
+                    mHeader.RigidIndex(bw, joint.IndexA);
+                    mHeader.RigidIndex(bw, joint.IndexB);
 
                     bw.Write(joint.Pos.x);
                     bw.Write(joint.Pos.y);
