@@ -299,14 +299,12 @@ class WavefrontObj : BaseModel {
         }
 
         Reverse();
-        InvertUV = EInvertUV.V;
-        TransformUV();
+        TransformUV(EInvertUV.V);
     }
 
     public override void Save(string path) {
         Reverse();
-        InvertUV = EInvertUV.V;
-        TransformUV();
+        TransformUV(EInvertUV.V);
         ToTriangle();
 
         // Material

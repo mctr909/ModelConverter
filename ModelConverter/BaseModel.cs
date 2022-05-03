@@ -85,9 +85,7 @@ abstract class BaseModel {
     protected List<float[]> mUvList = new List<float[]>();
     protected Dictionary<string, Material> mMaterialList = new Dictionary<string, Material>();
 
-    public bool SwapUV = false;
     public EInvertAxiz InvertAxiz = EInvertAxiz.None;
-    public EInvertUV InvertUV = EInvertUV.None;
 
     public int ObjectCount { get { return mObjectList.Count; } }
 
@@ -158,8 +156,8 @@ abstract class BaseModel {
         }
     }
 
-    public void TransformUV() {
-        switch (InvertUV) {
+    public void TransformUV(EInvertUV invertType, bool swapUV = false) {
+        switch (invertType) {
         case EInvertUV.None:
             break;
         case EInvertUV.U:
@@ -181,7 +179,7 @@ abstract class BaseModel {
             }
             break;
         }
-        if (SwapUV) {
+        if (swapUV) {
             for (int ui = 0; ui < mUvList.Count; ui++) {
                 var uv = new float[] { mUvList[ui][1], mUvList[ui][0] };
                 mUvList[ui] = uv;

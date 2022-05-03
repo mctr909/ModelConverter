@@ -62,12 +62,6 @@ namespace ModelConverter {
                 }
             }
 
-            Console.Write("UVの上下を入れ替えますか?[y/n]：");
-            var invertUV = BaseModel.EInvertUV.None;
-            if ("y" == Console.ReadLine()) {
-                invertUV |= BaseModel.EInvertUV.V;
-            }
-
             for (int argc = 0; argc < args.Length; argc++) {
                 var filePath = args[argc];
                 if (!File.Exists(filePath)) {
@@ -176,7 +170,6 @@ namespace ModelConverter {
                         convertedModel.SwapAxiz(BaseModel.ESwapAxiz.YZX);
                     }
                 }
-                convertedModel.InvertUV = invertUV;
                 convertedModel.Save(saveFilePath);
             }
         }
