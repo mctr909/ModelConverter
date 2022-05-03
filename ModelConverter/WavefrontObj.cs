@@ -299,10 +299,14 @@ class WavefrontObj : BaseModel {
         }
 
         Reverse();
+        InvertUV = EInvertUV.V;
+        TransformUV();
     }
 
     public override void Save(string path) {
         Reverse();
+        InvertUV = EInvertUV.V;
+        TransformUV();
         ToTriangle();
 
         // Material
@@ -439,24 +443,24 @@ class WavefrontObj : BaseModel {
             foreach (var m in mMaterialList) {
                 var val = m.Value;
                 fs.WriteLine("newmtl {0}", val.Name.Replace("\"", ""));
-                fs.WriteLine("\tNs 5");
-                fs.WriteLine("\tKd {0} {1} {2}", val.Diffuse.x, val.Diffuse.y, val.Diffuse.z);
-                fs.WriteLine("\tKa {0} {1} {2}", val.Ambient.x, val.Ambient.y, val.Ambient.z);
-                fs.WriteLine("\tKs {0} {1} {2}", val.Specular.x, val.Specular.y, val.Specular.z);
                 fs.WriteLine("\td {0}", val.Alpha);
-                // Todo: tex
-                //if (null != m.TexDiffuse) {
-                //    fs.Write("\tmap_Kd");
-                //    m.TexDiffuse.Write(fs);
-                //}
-                //if (null != m.TexAlapha) {
-                //    fs.Write("\tmap_d");
-                //    m.TexAlapha.Write(fs);
-                //}
-                //if (null != m.TexBumpMap) {
-                //    fs.Write("\tbump");
-                //    m.TexBumpMap.Write(fs);
-                //}
+                fs.WriteLine("\tKd {0} {1} {2}", val.Diffuse.x, val.Diffuse.y, val.Diffuse.z);
+                if (0 < val.Ambient.Abs) {
+                    fs.WriteLine("\tKa {0} {1} {2}", val.Ambient.x, val.Ambient.y, val.Ambient.z);
+                }
+                if (0 < val.Specular.Abs) {
+                    fs.WriteLine("\tKs {0} {1} {2}", val.Specular.x, val.Specular.y, val.Specular.z);
+                    fs.WriteLine("\tNs {0}", val.SpecularPower);
+                }
+                if (!string.IsNullOrEmpty(val.TexDiffuse)) {
+                    fs.WriteLine("\tmap_Kd {0}", val.TexDiffuse);
+                }
+                if (!string.IsNullOrEmpty(val.TexAlapha)) {
+                    fs.WriteLine("\tmap_d {0}", val.TexAlapha);
+                }
+                if (!string.IsNullOrEmpty(val.TexBumpMap)) {
+                    fs.WriteLine("\tbump {0}", val.TexBumpMap);
+                }
             }
         }
     }

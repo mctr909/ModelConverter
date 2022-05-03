@@ -69,8 +69,8 @@ abstract class BaseModel {
         public Material() {
             Name = "";
             Diffuse = new vec3(0.0f, 0.75f, 0.0f);
-            Ambient = new vec3(0.5f, 0.5f, 0.5f);
-            Specular = new vec3(1, 1, 1);
+            Ambient = new vec3();
+            Specular = new vec3();
             SpecularPower = 1;
             Alpha = 0;
             TexDiffuse = "";

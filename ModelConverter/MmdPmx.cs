@@ -1157,6 +1157,7 @@ namespace ModelConverter {
                 mat.Specular = new vec3(m.Specular[0], m.Specular[1], m.Specular[2]);
                 mat.SpecularPower = m.SpecularPower;
                 mat.Alpha = m.Diffuse[3];
+                mat.TexDiffuse = mTextures[m.TextureIndex];
                 mMaterialList.Add(mat.Name, mat);
             }
             Reverse();
@@ -1210,6 +1211,15 @@ namespace ModelConverter {
                         tmpMat.Ambient = new float[] { mat.Ambient.x, mat.Ambient.y, mat.Ambient.z };
                         tmpMat.Specular = new float[] { mat.Specular.x, mat.Specular.y, mat.Specular.z };
                         tmpMat.SpecularPower = mat.SpecularPower;
+                        if (!mTextures.Contains(mat.TexDiffuse)) {
+                            mTextures.Add(mat.TexDiffuse);
+                        }
+                        for (int tIdx = 0; tIdx < mTextures.Count; tIdx++) {
+                            if (mat.TexDiffuse == mTextures[tIdx]) {
+                                tmpMat.TextureIndex = tIdx;
+                                break;
+                            }
+                        }
                     }
                     foreach (var s in matList) {
                         tmpMat.Vertices += s.Indices.Count;
