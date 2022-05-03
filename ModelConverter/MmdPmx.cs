@@ -1,12 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
 namespace ModelConverter {
     class MmdPmx : BaseModel {
         #region struct
-        struct Vertex {
+        struct MMD_VERT {
             public vec3 Vert;
             public vec3 Norm;
             public float[] UV;
@@ -26,7 +25,7 @@ namespace ModelConverter {
             public float Edge;
         }
 
-        struct Material {
+        struct MMD_MAT {
             public string Name;
             public string NameEng;
 
@@ -49,7 +48,7 @@ namespace ModelConverter {
 
             public int Vertices;
 
-            public Material(int colorIdx = 0) {
+            public MMD_MAT(int colorIdx = 0) {
                 Name = "";
                 NameEng = "";
 
@@ -1100,10 +1099,10 @@ namespace ModelConverter {
         string mComment;
         string mCommentEng;
 
-        List<Vertex> mVertices = new List<Vertex>();
+        List<MMD_VERT> mVertices = new List<MMD_VERT>();
         List<int[]> mFaces = new List<int[]>();
         List<string> mTextures = new List<string>();
-        List<Material> mMaterials = new List<Material>();
+        List<MMD_MAT> mMaterials = new List<MMD_MAT>();
         List<Bone> mBones = new List<Bone>();
         List<Morphe> mMorphes = new List<Morphe>();
         List<DisplayGroup> mDisplayGroups = new List<DisplayGroup>();
@@ -1150,6 +1149,15 @@ namespace ModelConverter {
                 }
                 fIdxOfs += faces;
                 mObjectList.Add(obj);
+
+                var mat = new Material();
+                mat.Name = m.Name;
+                mat.Diffuse = new vec3(m.Diffuse[0], m.Diffuse[1], m.Diffuse[2]);
+                mat.Ambient = new vec3(m.Ambient[0], m.Ambient[1], m.Ambient[2]);
+                mat.Specular = new vec3(m.Specular[0], m.Specular[1], m.Specular[2]);
+                mat.SpecularPower = m.SpecularPower;
+                mat.Alpha = m.Diffuse[3];
+                mMaterialList.Add(mat.Name, mat);
             }
             Reverse();
         }
@@ -1161,7 +1169,7 @@ namespace ModelConverter {
 
             for (int i = 0; i < mVertList.Count; i++) {
                 var v = mVertList[i];
-                var vert = new Vertex();
+                var vert = new MMD_VERT();
                 vert.Vert = v;
                 vert.Norm = new vec3(0, 0, 0);
                 vert.UV = mVertList.Count == mUvList.Count ? mUvList[i] : new float[] { 0, 0 };
@@ -1193,7 +1201,7 @@ namespace ModelConverter {
                 }
                 foreach (var m in matDic) {
                     var matList = m.Value;
-                    var tmpMat = new Material(mMaterials.Count);
+                    var tmpMat = new MMD_MAT(mMaterials.Count);
                     tmpMat.Name = o.Name + "_" + m.Key;
                     tmpMat.NameEng = tmpMat.Name;
                     if (mMaterialList.ContainsKey(matList[0].MaterialName)) {
@@ -1272,7 +1280,7 @@ namespace ModelConverter {
             var count = br.ReadInt32();
 
             for (int i = 0; i < count; i++) {
-                var vertex = new Vertex();
+                var vertex = new MMD_VERT();
                 vertex.Vert = new vec3(
                     br.ReadSingle(),
                     br.ReadSingle(),
@@ -1443,7 +1451,7 @@ namespace ModelConverter {
         void loadMaterial(BinaryReader br) {
             var count = br.ReadInt32();
             for (int i = 0; i < count; i++) {
-                var mat = new Material();
+                var mat = new MMD_MAT();
 
                 var size = br.ReadInt32();
                 mat.Name = mHeader.GetString(br.ReadBytes(size));

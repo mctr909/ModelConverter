@@ -189,7 +189,7 @@ class Metasequoia : BaseModel {
         foreach (var m in mMaterialList) {
             var val = m.Value;
             var col = val.Diffuse.Norm;
-            fs.Write("\t\"{0}\"", val.Name);
+            fs.Write("\"{0}\"", val.Name);
             fs.Write(" shader(3)");
             fs.Write(" col({0} {1} {2} {3})", col.x, col.y, col.z, val.Alpha);
             fs.Write(" dif({0})", val.Diffuse.Abs);
