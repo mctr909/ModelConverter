@@ -91,7 +91,7 @@ namespace ModelConverter {
             }
         }
 
-        class DisplayFlag {
+        struct DisplayFlag {
             public const byte EBoth = 0x1;
             public const byte EGroundShadow = 0x2;
             public const byte ESelfShadowMap = 0x4;
@@ -181,7 +181,7 @@ namespace ModelConverter {
             public List<IkLink> IkLinks;
         }
 
-        public class BoneFlag {
+        public struct BoneFlag {
             const ushort EJointTarget = 0x1;
             const ushort ERotatable = 0x2;
             const ushort EMovable = 0x4;
@@ -364,7 +364,7 @@ namespace ModelConverter {
             public List<MaterialMorphe> Materials;
         }
 
-        class GroupMorphe {
+        struct GroupMorphe {
             public int Index;
             public float Ratio;
             public GroupMorphe(BinaryReader br, int index) {
@@ -376,7 +376,7 @@ namespace ModelConverter {
             }
         }
 
-        class VertexMorphe {
+        struct VertexMorphe {
             public int Index;
             public vec3 Offset;
             public VertexMorphe(BinaryReader br, int index) {
@@ -394,7 +394,7 @@ namespace ModelConverter {
             }
         }
 
-        class BoneMorphe {
+        struct BoneMorphe {
             public int Index;
             public vec3 Offset;
             public float[] Rotate;
@@ -424,7 +424,7 @@ namespace ModelConverter {
             }
         }
 
-        class UVMorphe {
+        struct UVMorphe {
             public int Index;
             public float[] Offset;
             public UVMorphe(BinaryReader br, int index) {
@@ -444,7 +444,7 @@ namespace ModelConverter {
             }
         }
 
-        class MaterialMorphe {
+        struct MaterialMorphe {
             public int Index;
             public OffsetType OffsetType;
             public float[] Diffuse;
@@ -582,7 +582,7 @@ namespace ModelConverter {
             public CalcType CalcType;
         }
 
-        class CollisionFlag {
+        struct CollisionFlag {
             const ushort G1 = 0x1;
             const ushort G2 = 0x2;
             const ushort G3 = 0x4;
