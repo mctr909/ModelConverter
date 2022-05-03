@@ -78,10 +78,12 @@ class Metasequoia : BaseModel {
     public override void Save(string path) {
         var fileName = Path.GetFileNameWithoutExtension(path);
         var textFilePath = AppContext.BaseDirectory + fileName;
+        var enc = new UTF8Encoding(false);
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-        using (var fs = new StreamWriter(textFilePath, false, Encoding.GetEncoding("Shift_JIS"))) {
+        using (var fs = new StreamWriter(textFilePath, false, enc)) {
             fs.WriteLine("Metasequoia Document");
-            fs.WriteLine("Format Text Ver 1.1");
+            fs.WriteLine("Format Text Ver 1.2");
+            fs.WriteLine("CodePage utf8");
             fs.WriteLine();
             writeMaterial(fs);
             foreach (var obj in mObjectList) {
@@ -189,7 +191,7 @@ class Metasequoia : BaseModel {
         foreach (var m in mMaterialList) {
             var val = m.Value;
             var col = val.Diffuse.Norm;
-            fs.Write("\"{0}\"", val.Name);
+            fs.Write("\t\"{0}\"", val.Name);
             fs.Write(" shader(3)");
             fs.Write(" col({0} {1} {2} {3})", col.x, col.y, col.z, val.Alpha);
             fs.Write(" dif({0})", val.Diffuse.Abs);

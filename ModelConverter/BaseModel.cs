@@ -66,6 +66,17 @@ abstract class BaseModel {
         public string TexDiffuse;
         public string TexAlapha;
         public string TexBumpMap;
+        public Material() {
+            Name = "";
+            Diffuse = new vec3(0.0f, 0.75f, 0.0f);
+            Ambient = new vec3(0.5f, 0.5f, 0.5f);
+            Specular = new vec3(1, 1, 1);
+            SpecularPower = 1;
+            Alpha = 0;
+            TexDiffuse = "";
+            TexAlapha = "";
+            TexBumpMap = "";
+        }
     }
 
     protected List<Object> mObjectList = new List<Object>();

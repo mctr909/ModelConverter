@@ -1202,7 +1202,7 @@ namespace ModelConverter {
                 foreach (var m in matDic) {
                     var matList = m.Value;
                     var tmpMat = new MMD_MAT(mMaterials.Count);
-                    tmpMat.Name = o.Name + "_" + m.Key;
+                    tmpMat.Name = m.Key;
                     tmpMat.NameEng = tmpMat.Name;
                     if (mMaterialList.ContainsKey(matList[0].MaterialName)) {
                         var mat = mMaterialList[matList[0].MaterialName];

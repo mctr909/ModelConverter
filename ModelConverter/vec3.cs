@@ -5,7 +5,7 @@ class vec3 {
     public float y;
     public float z;
 
-    public double Abs { get { return Math.Sqrt(this ^ this); } }
+    public float Abs { get { return (float)Math.Sqrt(this ^ this); } }
 
     public vec3 Norm {
         get {
