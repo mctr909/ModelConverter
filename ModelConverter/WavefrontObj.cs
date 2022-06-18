@@ -330,7 +330,9 @@ class WavefrontObj : BaseModel {
             fs.WriteLine("g {0}", obj.Name.Replace("\"", ""));
             foreach (var s in obj.Surfaces) {
                 if (curMaterial != s.MaterialName) {
-                    fs.WriteLine("usemtl {0}", s.MaterialName);
+                    if (!string.IsNullOrEmpty(s.MaterialName)) {
+                        fs.WriteLine("usemtl {0}", s.MaterialName);
+                    }
                     curMaterial = s.MaterialName;
                 }
                 if (0 < s.Indices.Count) {
