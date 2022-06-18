@@ -4,6 +4,8 @@
 #include "framework.h"
 #include "Viewer.h"
 #include "DxGraphic.h"
+#include <windowsx.h>
+
 #define MAX_LOADSTRING 100
 
 // グローバル変数:
@@ -128,6 +130,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
 	GetClientRect(hWnd, &rc);
 	int w = rc.right - rc.left;
 	int h = rc.bottom - rc.top;
+    int xPos = 0;
+    int yPos = 0;
     switch (message) {
 	case WM_SIZE:
 		if (g_dxgra.ResizeView(w, h)) {
@@ -144,6 +148,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
             // TODO: HDC を使用する描画コードをここに追加してください...
             EndPaint(hWnd, &ps);
         }
+        break;
+    case WM_LBUTTONDOWN:
+        break;
+    case WM_LBUTTONUP:
+        break;
+    case WM_MOUSEMOVE:
+        xPos = GET_X_LPARAM(lParam);
+        yPos = GET_Y_LPARAM(lParam);
         break;
     case WM_DESTROY:
         PostQuitMessage(0);
