@@ -89,10 +89,6 @@ abstract class BaseModel {
 
     public int ObjectCount { get { return mObjectList.Count; } }
 
-    public int SignX { get { return 0 < (InvertAxiz & EInvertAxiz.X) ? -1 : 1; } }
-    public int SignY { get { return 0 < (InvertAxiz & EInvertAxiz.Y) ? -1 : 1; } }
-    public int SignZ { get { return 0 < (InvertAxiz & EInvertAxiz.Z) ? -1 : 1; } }
-
     public abstract void Save(string path);
 
     public virtual void Load(BaseModel srcModel) {

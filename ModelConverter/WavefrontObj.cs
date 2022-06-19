@@ -314,11 +314,8 @@ class WavefrontObj : BaseModel {
         var fs = new StreamWriter(path);
         fs.WriteLine("mtllib {0}", mtlName);
         // Vertex
-        var signx = SignX;
-        var signy = SignY;
-        var signz = SignZ;
         foreach (var v in mVertList) {
-            fs.WriteLine("v {0} {1} {2}", v.x * signx, v.y * signy, v.z * signz);
+            fs.WriteLine("v {0} {1} {2}", v.x, v.y, v.z);
         }
         // UV
         foreach (var uv in mUvList) {

@@ -2,7 +2,7 @@
   "profiles": {
     "ModelConverter": {
       "commandName": "Project",
-      "commandLineArgs": "\"C:\\Users\\user\\Desktop\\VS project\\ModelConverter\\ModelConverter\\bin\\Debug\\net6.0\\piece-05_500x500_Kuboki.mqoz\""
+      "commandLineArgs": "\"C:\\Users\\user\\Desktop\\PmxEditor_0257c\\model\\歪断 灰 ver1.0 r-18\\歪断 灰 r-18.pmx\""
     }
   }
 }
