@@ -1,15 +1,14 @@
 ﻿//{{NO_DEPENDENCIES}}
 // Microsoft Visual C++ で生成されたインクルード ファイル。
-// Viewer.rc で使用
+// HillsDemo.rc で使用
 //
 #define IDC_MYICON                      2
-#define IDD_DRAWPRIMITIVE_DIALOG        102
+#define IDD_HILLSDEMO_DIALOG            102
 #define IDS_APP_TITLE                   103
 #define IDM_ABOUT                       104
-#define IDM_EXIT                        105
-#define IDI_DRAWPRIMITIVE               107
+#define IDI_HILLSDEMO                   107
 #define IDI_SMALL                       108
-#define IDC_DRAWPRIMITIVE               109
+#define IDC_VIEWER                      109
 #define IDR_MAINFRAME                   128
 #define IDC_STATIC                      -1
 

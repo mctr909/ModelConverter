@@ -1,10 +1,9 @@
-﻿// アプリケーションのエントリ ポイントを定義します。
+﻿// HillsDemo.cpp : アプリケーションのエントリ ポイントを定義します。
 //
 
 #include "framework.h"
 #include "Viewer.h"
 #include "DxGraphic.h"
-#include <windowsx.h>
 
 #define MAX_LOADSTRING 100
 
@@ -12,7 +11,7 @@
 HINSTANCE hInst;                                // 現在のインターフェイス
 WCHAR szTitle[MAX_LOADSTRING];                  // タイトル バーのテキスト
 WCHAR szWindowClass[MAX_LOADSTRING];            // メイン ウィンドウ クラス名
-CDxGraphic g_dxgra;                             // DirectX 描画処理
+DXGraphicAPI::CDxGraphic g_dxgra;               // DirectX 描画処理
 
 // このコード モジュールに含まれる関数の宣言を転送します:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
@@ -31,7 +30,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     // グローバル文字列を初期化する
     LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
-    LoadStringW(hInstance, IDC_DRAWPRIMITIVE, szWindowClass, MAX_LOADSTRING);
+    LoadStringW(hInstance, IDC_VIEWER, szWindowClass, MAX_LOADSTRING);
     MyRegisterClass(hInstance);
 
     // アプリケーション初期化の実行:
@@ -39,7 +38,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         return FALSE;
     }
 
-    HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_DRAWPRIMITIVE));
+    HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_VIEWER));
 
     MSG msg;
 
@@ -69,10 +68,10 @@ ATOM MyRegisterClass(HINSTANCE hInstance) {
     wcex.cbClsExtra     = 0;
     wcex.cbWndExtra     = 0;
     wcex.hInstance      = hInstance;
-    wcex.hIcon          = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_DRAWPRIMITIVE));
+    wcex.hIcon          = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_HILLSDEMO));
     wcex.hCursor        = LoadCursor(nullptr, IDC_ARROW);
     wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW+1);
-    wcex.lpszMenuName   = MAKEINTRESOURCEW(IDC_DRAWPRIMITIVE);
+    wcex.lpszMenuName   = MAKEINTRESOURCEW(IDC_VIEWER);
     wcex.lpszClassName  = szWindowClass;
     wcex.hIconSm        = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
 
@@ -102,14 +101,13 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow) {
    ShowWindow(hWnd, nCmdShow);
    UpdateWindow(hWnd);
 
-
    g_dxgra.SetWindowHandle(hWnd);
    RECT rc;
    GetClientRect(hWnd, &rc);
    int w = rc.right - rc.left;
    int h = rc.bottom - rc.top;
    if (g_dxgra.InitD3D(w, h)) {
-	   g_dxgra.LoadSampleData(w, h);
+       g_dxgra.BuildGeometryBuffers(w, h);
    }
 
    return TRUE;
@@ -126,21 +124,19 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow) {
 //
 //
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
-	RECT rc;
-	GetClientRect(hWnd, &rc);
-	int w = rc.right - rc.left;
-	int h = rc.bottom - rc.top;
-    int xPos = 0;
-    int yPos = 0;
+    RECT rc;
+    GetClientRect(hWnd, &rc);
+    int w = rc.right - rc.left;
+    int h = rc.bottom - rc.top;
+
     switch (message) {
-	case WM_SIZE:
-		if (g_dxgra.ResizeView(w, h)) {
-			g_dxgra.UpdateMatrices(w, h);
-			g_dxgra.Render();
-		}
-		break;
-    case WM_COMMAND: {
+    case WM_SIZE:
+        if (g_dxgra.ResizeView(w, h)) {
+            g_dxgra.UpdateMatrices(w, h);
+            g_dxgra.Render();
         }
+        break;
+    case WM_COMMAND:
         break;
     case WM_PAINT: {
             PAINTSTRUCT ps;
@@ -148,14 +144,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
             // TODO: HDC を使用する描画コードをここに追加してください...
             EndPaint(hWnd, &ps);
         }
-        break;
-    case WM_LBUTTONDOWN:
-        break;
-    case WM_LBUTTONUP:
-        break;
-    case WM_MOUSEMOVE:
-        xPos = GET_X_LPARAM(lParam);
-        yPos = GET_Y_LPARAM(lParam);
         break;
     case WM_DESTROY:
         PostQuitMessage(0);
