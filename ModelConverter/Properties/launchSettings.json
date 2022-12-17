@@ -2,7 +2,7 @@
   "profiles": {
     "ModelConverter": {
       "commandName": "Project",
-      "commandLineArgs": "\"C:\\Users\\user\\Desktop\\PmxEditor_0257c\\model\\歪断 灰 ver1.0 r-18\\歪断 灰 r-18.pmx\""
+      "commandLineArgs": "\"C:\\Users\\ris\\Desktop\\VS_Projects\\ModelConverter\\ModelConverter\\bin\\Debug\\net6.0\\shikoku_mono_256_thickness2_outline.mqo\""
     }
   }
 }

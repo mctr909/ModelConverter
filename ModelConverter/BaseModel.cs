@@ -40,8 +40,8 @@ abstract class BaseModel {
         public string MaterialName;
         public List<Index> Indices;
         public List<int> Line;
-        public Surface() {
-            MaterialName = "";
+        public Surface(string name = "") {
+            MaterialName = name;
             Indices = new List<Index>();
             Line = new List<int>();
         }
@@ -50,8 +50,8 @@ abstract class BaseModel {
     protected struct Object {
         public string Name;
         public List<Surface> Surfaces;
-        public Object() {
-            Name = "";
+        public Object(string name = "") {
+            Name = name;
             Surfaces = new List<Surface>();
         }
     }
@@ -66,8 +66,8 @@ abstract class BaseModel {
         public string TexDiffuse;
         public string TexAlapha;
         public string TexBumpMap;
-        public Material() {
-            Name = "";
+        public Material(string name = "") {
+            Name = name;
             Diffuse = new vec3(0.0f, 0.75f, 0.0f);
             Ambient = new vec3();
             Specular = new vec3();

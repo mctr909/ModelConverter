@@ -323,11 +323,17 @@ class Metasequoia : BaseModel {
                     var indexes = cols[colIdx + 1].Split(" ");
                     if (3 <= indexes.Length) {
                         foreach (var str in indexes) {
-                            vertIdx.Add(idxOfs + int.Parse(str));
+                            int index = 0;
+                            if (int.TryParse(str, out index)) {
+                                vertIdx.Add(idxOfs + index);
+                            }
                         }
                     } else {
                         foreach (var str in indexes) {
-                            surface.Line.Add(idxOfs + int.Parse(str));
+                            int index = 0;
+                            if (int.TryParse(str, out index)) {
+                                surface.Line.Add(idxOfs + index);
+                            }
                         }
                     }
                     break;
