@@ -7,8 +7,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ModelConverter", "ModelConv
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Viewer", "Viewer\Viewer.vcxproj", "{3550F815-5B01-4EF5-A8EC-9A6D201164FA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ModelConverter_net4", "ModelConverter_net4\ModelConverter_net4.csproj", "{38F6542F-FCDB-4D98-968C-094F3080EC78}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -43,18 +41,6 @@ Global
 		{3550F815-5B01-4EF5-A8EC-9A6D201164FA}.Release|x64.Build.0 = Release|x64
 		{3550F815-5B01-4EF5-A8EC-9A6D201164FA}.Release|x86.ActiveCfg = Release|Win32
 		{3550F815-5B01-4EF5-A8EC-9A6D201164FA}.Release|x86.Build.0 = Release|Win32
-		{38F6542F-FCDB-4D98-968C-094F3080EC78}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{38F6542F-FCDB-4D98-968C-094F3080EC78}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{38F6542F-FCDB-4D98-968C-094F3080EC78}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{38F6542F-FCDB-4D98-968C-094F3080EC78}.Debug|x64.Build.0 = Debug|Any CPU
-		{38F6542F-FCDB-4D98-968C-094F3080EC78}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{38F6542F-FCDB-4D98-968C-094F3080EC78}.Debug|x86.Build.0 = Debug|Any CPU
-		{38F6542F-FCDB-4D98-968C-094F3080EC78}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{38F6542F-FCDB-4D98-968C-094F3080EC78}.Release|Any CPU.Build.0 = Release|Any CPU
-		{38F6542F-FCDB-4D98-968C-094F3080EC78}.Release|x64.ActiveCfg = Release|Any CPU
-		{38F6542F-FCDB-4D98-968C-094F3080EC78}.Release|x64.Build.0 = Release|Any CPU
-		{38F6542F-FCDB-4D98-968C-094F3080EC78}.Release|x86.ActiveCfg = Release|Any CPU
-		{38F6542F-FCDB-4D98-968C-094F3080EC78}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

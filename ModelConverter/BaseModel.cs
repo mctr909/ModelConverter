@@ -36,47 +36,27 @@ abstract class BaseModel {
         }
     }
 
-    protected struct Surface {
-        public string MaterialName;
-        public List<Index> Indices;
-        public List<int> Line;
-        public Surface(string name = "") {
-            MaterialName = name;
-            Indices = new List<Index>();
-            Line = new List<int>();
-        }
+    protected class Surface {
+        public string MaterialName = "";
+        public List<Index> Indices = new List<Index>();
+        public List<int> Line = new List<int>();
     }
 
-    protected struct Object {
-        public string Name;
-        public List<Surface> Surfaces;
-        public Object(string name = "") {
-            Name = name;
-            Surfaces = new List<Surface>();
-        }
+    protected class Object {
+        public string Name = "";
+        public List<Surface> Surfaces = new List<Surface>();
     }
 
-    protected struct Material {
-        public string Name;
-        public vec3 Diffuse;
-        public vec3 Ambient;
-        public vec3 Specular;
-        public float SpecularPower;
-        public float Alpha;
-        public string TexDiffuse;
-        public string TexAlapha;
-        public string TexBumpMap;
-        public Material(string name = "") {
-            Name = name;
-            Diffuse = new vec3(0.0f, 0.75f, 0.0f);
-            Ambient = new vec3();
-            Specular = new vec3();
-            SpecularPower = 1;
-            Alpha = 0;
-            TexDiffuse = "";
-            TexAlapha = "";
-            TexBumpMap = "";
-        }
+    protected class Material {
+        public string Name = "";
+        public vec3 Diffuse = new vec3(0.0f, 0.75f, 0.0f);
+        public vec3 Ambient = new vec3();
+        public vec3 Specular = new vec3();
+        public float SpecularPower = 1;
+        public float Alpha = 0;
+        public string TexDiffuse = "";
+        public string TexAlapha = "";
+        public string TexBumpMap = "";
     }
 
     protected List<Object> mObjectList = new List<Object>();
