@@ -93,8 +93,9 @@ class StlBin : BaseModel {
                 continue;
             }
             byte[] tName = new byte[] { 0 };
-            if (!string.IsNullOrEmpty(obj.Name)) {
-                tName = Encoding.UTF8.GetBytes(obj.Name);
+            var name = obj.Name.Replace("\"", "");
+            if (!string.IsNullOrEmpty(name)) {
+                tName = Encoding.UTF8.GetBytes(name);
             }
             var arrName = new byte[80];
             Array.Copy(tName, arrName, Math.Min(arrName.Length, tName.Length));

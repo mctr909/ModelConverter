@@ -53,7 +53,7 @@ class Metasequoia : BaseModel {
                     loadMaterial(fs);
                     break;
                 case "Object":
-                    loadObject(fs, cols[1]);
+                    loadObject(fs, line.Replace("Object ", "").Replace(" {", ""));
                     break;
                 case "}":
                     mCurrentChunk = "";
@@ -87,7 +87,7 @@ class Metasequoia : BaseModel {
             fs.WriteLine();
             writeMaterial(fs);
             foreach (var obj in mObjectList) {
-                fs.WriteLine("Object \"" + obj.Name + "\" {");
+                fs.WriteLine("Object \"" + obj.Name.Replace("\"", "") + "\" {");
                 fs.WriteLine("\tdepth 0");
                 fs.WriteLine("\tfolding 0");
                 fs.WriteLine("\tscale 1 1 1");
@@ -191,7 +191,7 @@ class Metasequoia : BaseModel {
         foreach (var m in mMaterialList) {
             var val = m.Value;
             var col = val.Diffuse.Norm;
-            fs.Write("\t\"{0}\"", val.Name);
+            fs.Write("\t\"{0}\"", val.Name.Replace("\"", ""));
             fs.Write(" shader(3)");
             fs.Write(" col({0} {1} {2} {3})", col.x, col.y, col.z, val.Alpha);
             fs.Write(" dif({0})", val.Diffuse.Abs);

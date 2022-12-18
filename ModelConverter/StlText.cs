@@ -70,7 +70,7 @@ class StlText : BaseModel {
             if (0 == surfCount) {
                 continue;
             }
-            fs.WriteLine("solid {0}", obj.Name);
+            fs.WriteLine("solid \"{0}\"", obj.Name.Replace("\"", ""));
             foreach (var s in obj.Surfaces) {
                 if (0 == s.Indices.Count) {
                     continue;
