@@ -171,7 +171,7 @@ class Collada : BaseModel {
         }
     }
 
-    class Material {
+    new class Material {
         public string Id;
         public string Name;
         public string URL;
@@ -1666,23 +1666,23 @@ class Collada : BaseModel {
     }
     #endregion
 
-    public struct MATERIAL {
-        public string Name;
-        public string DiffuseTexture;
-        public double[] DiffuseColor;
-        public string AmbientTexture;
-        public double[] AmbientColor;
-        public string SpecularTexture;
-        public double[] SpecularColor;
+    public class MATERIAL {
+        public string Name = "";
+        public string DiffuseTexture = "";
+        public double[] DiffuseColor = null;
+        public string AmbientTexture = "";
+        public double[] AmbientColor = null;
+        public string SpecularTexture = "";
+        public double[] SpecularColor = null;
     }
 
-    public struct OBJECT {
-        public string Name;
-        public string Material;
-        public List<vec3> Vert;
-        public List<vec3> Norm;
-        public List<double[]> UV;
-        public List<int[]> Face;
+    public class OBJECT {
+        public string Name = "";
+        public string Material = "";
+        public List<vec3> Vert = new List<vec3>();
+        public List<vec3> Norm = new List<vec3>();
+        public List<double[]> UV = new List<double[]>();
+        public List<int[]> Face = new List<int[]>();
     }
 
     List<Image> Images = new List<Image>();

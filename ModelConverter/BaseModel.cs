@@ -3,26 +3,20 @@ using System.Collections.Generic;
 
 abstract class BaseModel {
     public enum ESwapAxiz {
-        XYZ,
         XZY,
+
         YXZ,
         YZX,
+        
         ZXY,
         ZYX
     }
 
-    public enum EInvertAxiz {
-        None = 0,
-        X = 1,
-        Y = 2,
-        Z = 4
-    }
-
     public enum EInvertUV {
-        None = 0,
-        U = 1,
-        V = 2,
-        UV = 3
+        None,
+        ForwordU_ReverseV,
+        ReverseU_ForwordV,
+        ReverseU_ReverseV
     }
 
     protected struct Index {
@@ -65,8 +59,6 @@ abstract class BaseModel {
     protected List<float[]> mUvList = new List<float[]>();
     protected Dictionary<string, Material> mMaterialList = new Dictionary<string, Material>();
 
-    public EInvertAxiz InvertAxiz = EInvertAxiz.None;
-
     public int ObjectCount { get { return mObjectList.Count; } }
 
     public abstract void Save(string path);
@@ -89,13 +81,25 @@ abstract class BaseModel {
         }
     }
 
+    public void Reverse() {
+        for (int iobj = 0; iobj < mObjectList.Count; iobj++) {
+            var obj = mObjectList[iobj];
+            for (int isurf = 0; isurf < obj.Surfaces.Count; isurf++) {
+                var surf = obj.Surfaces[isurf];
+                var tmpIdxList = new List<Index>();
+                for (int i = surf.Indices.Count - 1; 0 <= i; i--) {
+                    tmpIdxList.Add(surf.Indices[i]);
+                }
+                surf.Indices.Clear();
+                surf.Indices.AddRange(tmpIdxList);
+            }
+        }
+    }
+
     public void SwapAxiz(ESwapAxiz type) {
         for (int vi = 0; vi < mVertList.Count; vi++) {
             var v = mVertList[vi];
             switch (type) {
-            case ESwapAxiz.XYZ:
-                mVertList[vi] = new vec3(v.x, v.y, v.z);
-                break;
             case ESwapAxiz.XZY:
                 mVertList[vi] = new vec3(v.x, v.z, v.y);
                 break;
@@ -117,38 +121,21 @@ abstract class BaseModel {
         }
     }
 
-    public void Reverse() {
-        for (int io = 0; io < mObjectList.Count; io++) {
-            var o = mObjectList[io];
-            for (int isurf = 0; isurf < o.Surfaces.Count; isurf++) {
-                var s = o.Surfaces[isurf];
-                var tmpIdxList = new List<Index>();
-                for (int i = s.Indices.Count - 1; 0 <= i; i--) {
-                    tmpIdxList.Add(s.Indices[i]);
-                }
-                s.Indices.Clear();
-                s.Indices.AddRange(tmpIdxList);
-            }
-        }
-    }
-
     public void TransformUV(EInvertUV invertType, bool swapUV = false) {
         switch (invertType) {
-        case EInvertUV.None:
-            break;
-        case EInvertUV.U:
-            for (int ui = 0; ui < mUvList.Count; ui++) {
-                var uv = new float[] { 1.0f - mUvList[ui][0], mUvList[ui][1] };
-                mUvList[ui] = uv;
-            }
-            break;
-        case EInvertUV.V:
+        case EInvertUV.ForwordU_ReverseV:
             for (int ui = 0; ui < mUvList.Count; ui++) {
                 var uv = new float[] { mUvList[ui][0], 1.0f - mUvList[ui][1] };
                 mUvList[ui] = uv;
             }
             break;
-        case EInvertUV.UV:
+        case EInvertUV.ReverseU_ForwordV:
+            for (int ui = 0; ui < mUvList.Count; ui++) {
+                var uv = new float[] { 1.0f - mUvList[ui][0], mUvList[ui][1] };
+                mUvList[ui] = uv;
+            }
+            break;
+        case EInvertUV.ReverseU_ReverseV:
             for (int ui = 0; ui < mUvList.Count; ui++) {
                 var uv = new float[] { 1.0f - mUvList[ui][0], 1.0f - mUvList[ui][1] };
                 mUvList[ui] = uv;
