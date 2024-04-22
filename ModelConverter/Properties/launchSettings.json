@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "ModelConverter": {
-      "commandName": "Project",
-      "commandLineArgs": "\"C:\\Users\\ris\\Desktop\\VS_Projects\\ModelConverter\\ModelConverter\\bin\\Debug\\net6.0\\shikoku_mono_256_thickness2_outline.mqo\""
-    }
-  }
-}
